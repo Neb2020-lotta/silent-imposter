@@ -56,7 +56,7 @@ const wordCategories: Record<string, WordData[]> = {
 };
 
 const ImposterGame: React.FC = () => {
-  const [gameState, setGameState] = useState<'setup' | 'playing' | 'reveal'>('setup');
+  const [gameState, setGameState] = useState<'setup' | 'playing' | 'discussion' | 'reveal'>('setup');
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [playerCount, setPlayerCount] = useState(4);
@@ -227,9 +227,13 @@ const ImposterGame: React.FC = () => {
       setCurrentPlayerIndex(currentPlayerIndex + 1);
       setShowPlayerWord(false);
     } else {
-      // All players have seen their words
-      setGameState('reveal');
+      // All players have seen their words, go to discussion
+      setGameState('discussion');
     }
+  };
+
+  const goToReveal = () => {
+    setGameState('reveal');
   };
 
   const resetGame = () => {
@@ -463,6 +467,49 @@ const ImposterGame: React.FC = () => {
                     </Button>
                   </>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Discussion Phase */}
+        {gameState === 'discussion' && (
+          <div className="w-full max-w-lg">
+            <div 
+              className="relative overflow-hidden rounded-3xl p-8 backdrop-blur-md"
+              style={{ 
+                background: 'hsla(var(--game-card-bg), 0.8)',
+                border: '2px solid hsl(var(--game-border))',
+                boxShadow: 'var(--game-card-shadow)'
+              }}
+            >
+              <div className="text-center space-y-6">
+                <h2 className="text-3xl font-bold" style={{ color: 'hsl(var(--game-accent))' }}>
+                  🔍 Alle Spieler haben ihr Wort erhalten!
+                </h2>
+                <p className="text-xl">Die Diskussion beginnt!</p>
+                <p className="text-lg">Wer ist der Imposter?</p>
+                <div className="my-6 p-4 rounded-xl" style={{ background: 'hsla(var(--game-accent), 0.1)' }}>
+                  <p className="text-xl font-bold" style={{ color: 'hsl(var(--game-accent))' }}>
+                    {players[Math.floor(Math.random() * players.length)]?.name}, du beginnst!
+                  </p>
+                </div>
+                <div className="flex gap-4">
+                  <Button 
+                    onClick={goToReveal}
+                    className="flex-1 text-lg py-4"
+                    style={{ background: 'var(--gradient-button-reveal)' }}
+                  >
+                    🔍 Zur Auflösung
+                  </Button>
+                  <Button 
+                    onClick={() => startGame(true)}
+                    className="flex-1"
+                    style={{ background: 'var(--gradient-button-success)' }}
+                  >
+                    🚀 Schneller Start
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
