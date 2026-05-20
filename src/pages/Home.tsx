@@ -8,8 +8,11 @@ import { wordCategories, generateRoomCode } from "@/lib/words";
 import { getClientId, getStoredName, setStoredName } from "@/lib/clientId";
 import { toast } from "sonner";
 
+type Mode = "menu" | "host" | "join";
+
 export default function Home() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<Mode>("menu");
   const [name, setName] = useState(getStoredName());
   const [code, setCode] = useState("");
   const [category, setCategory] = useState("Allgemein");
@@ -86,6 +89,12 @@ export default function Home() {
     navigate(`/room/${upper}`);
   };
 
+  const inputStyle = {
+    background: "hsla(var(--game-input-bg), 0.7)",
+    border: "2px solid hsl(var(--game-border))",
+    color: "hsl(var(--game-text))",
+  };
+
   return (
     <div className="min-h-screen font-poppins text-[color:hsl(var(--game-text))]" style={{ background: "var(--gradient-game-bg)" }}>
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4">
@@ -109,94 +118,108 @@ export default function Home() {
             boxShadow: "var(--game-card-shadow)",
           }}
         >
-          <div>
-            <label className="block text-lg mb-2">Dein Name</label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Wie heißt du?"
-              maxLength={20}
-              className="text-center text-lg"
-              style={{
-                background: "hsla(var(--game-input-bg), 0.7)",
-                border: "2px solid hsl(var(--game-border))",
-                color: "hsl(var(--game-text))",
-              }}
-            />
-          </div>
-
-          <div className="space-y-3 pt-2 border-t border-[hsl(var(--game-border))]">
-            <h2 className="text-xl font-bold text-center">🚪 Raum beitreten</h2>
-            <Input
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="6-stelliger Code"
-              maxLength={6}
-              className="text-center text-2xl tracking-widest font-bold"
-              style={{
-                background: "hsla(var(--game-input-bg), 0.7)",
-                border: "2px solid hsl(var(--game-border))",
-                color: "hsl(var(--game-text))",
-              }}
-            />
-            <Button
-              onClick={joinRoom}
-              disabled={busy}
-              className="w-full text-lg py-4"
-              style={{ background: "var(--gradient-button-success)" }}
-            >
-              Beitreten
-            </Button>
-          </div>
-
-          <div className="space-y-3 pt-4 border-t border-[hsl(var(--game-border))]">
-            <h2 className="text-xl font-bold text-center">✨ Neuen Raum erstellen</h2>
-            <div>
-              <label className="block text-sm mb-1">Thema</label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger
-                  style={{
-                    background: "hsla(var(--game-input-bg), 0.7)",
-                    border: "2px solid hsl(var(--game-border))",
-                    color: "hsl(var(--game-text))",
-                  }}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.keys(wordCategories).map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {mode === "menu" && (
+            <div className="space-y-4">
+              <p className="text-center text-lg opacity-80">Was willst du tun?</p>
+              <Button
+                onClick={() => setMode("host")}
+                className="w-full text-xl py-6"
+                style={{ background: "var(--gradient-button-primary)" }}
+              >
+                👑 Server hosten
+              </Button>
+              <Button
+                onClick={() => setMode("join")}
+                className="w-full text-xl py-6"
+                style={{ background: "var(--gradient-button-success)" }}
+              >
+                🚪 Server beitreten
+              </Button>
             </div>
+          )}
+
+          {mode !== "menu" && (
             <div>
-              <label className="block text-sm mb-1">Anzahl Imposter</label>
+              <label className="block text-lg mb-2">Dein Name</label>
               <Input
-                type="number"
-                min={1}
-                max={4}
-                value={imposterCount}
-                onChange={(e) => setImposterCount(Math.max(1, Math.min(4, parseInt(e.target.value) || 1)))}
-                className="text-center"
-                style={{
-                  background: "hsla(var(--game-input-bg), 0.7)",
-                  border: "2px solid hsl(var(--game-border))",
-                  color: "hsl(var(--game-text))",
-                }}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Wie heißt du?"
+                maxLength={20}
+                className="text-center text-lg"
+                style={inputStyle}
               />
             </div>
-            <Button
-              onClick={createRoom}
-              disabled={busy}
-              className="w-full text-lg py-4"
-              style={{ background: "var(--gradient-button-primary)" }}
-            >
-              Raum erstellen
-            </Button>
-          </div>
+          )}
+
+          {mode === "join" && (
+            <div className="space-y-3">
+              <h2 className="text-xl font-bold text-center">🚪 Raum beitreten</h2>
+              <Input
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="6-stelliger Code"
+                maxLength={6}
+                className="text-center text-2xl tracking-widest font-bold"
+                style={inputStyle}
+              />
+              <Button
+                onClick={joinRoom}
+                disabled={busy}
+                className="w-full text-lg py-4"
+                style={{ background: "var(--gradient-button-success)" }}
+              >
+                Beitreten
+              </Button>
+              <Button variant="ghost" onClick={() => setMode("menu")} className="w-full">
+                ← Zurück
+              </Button>
+            </div>
+          )}
+
+          {mode === "host" && (
+            <div className="space-y-3">
+              <h2 className="text-xl font-bold text-center">✨ Neuen Raum erstellen</h2>
+              <div>
+                <label className="block text-sm mb-1">Thema</label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger style={inputStyle}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(wordCategories).map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Anzahl Imposter</label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={4}
+                  value={imposterCount}
+                  onChange={(e) => setImposterCount(Math.max(1, Math.min(4, parseInt(e.target.value) || 1)))}
+                  className="text-center"
+                  style={inputStyle}
+                />
+              </div>
+              <Button
+                onClick={createRoom}
+                disabled={busy}
+                className="w-full text-lg py-4"
+                style={{ background: "var(--gradient-button-primary)" }}
+              >
+                Raum erstellen
+              </Button>
+              <Button variant="ghost" onClick={() => setMode("menu")} className="w-full">
+                ← Zurück
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
