@@ -1,7 +1,3 @@
-import ImposterGame from '@/components/ImposterGame';
-
-const Index = () => {
-  return <ImposterGame />;
-};
-
+import Home from "./Home";
+const Index = () => <Home />;
 export default Index;
