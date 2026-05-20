@@ -62,6 +62,7 @@ export type Database = {
           joined_at: string
           name: string
           room_id: string
+          voted_for: string | null
           word: string | null
         }
         Insert: {
@@ -73,6 +74,7 @@ export type Database = {
           joined_at?: string
           name: string
           room_id: string
+          voted_for?: string | null
           word?: string | null
         }
         Update: {
@@ -84,6 +86,7 @@ export type Database = {
           joined_at?: string
           name?: string
           room_id?: string
+          voted_for?: string | null
           word?: string | null
         }
         Relationships: [
