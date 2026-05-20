@@ -14,7 +14,127 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          kind: string
+          player_id: string | null
+          player_name: string
+          room_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          kind?: string
+          player_id?: string | null
+          player_name: string
+          room_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          player_id?: string | null
+          player_name?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      players: {
+        Row: {
+          client_id: string
+          id: string
+          imposter_tip: string | null
+          is_host: boolean
+          is_imposter: boolean
+          joined_at: string
+          name: string
+          room_id: string
+          word: string | null
+        }
+        Insert: {
+          client_id: string
+          id?: string
+          imposter_tip?: string | null
+          is_host?: boolean
+          is_imposter?: boolean
+          joined_at?: string
+          name: string
+          room_id: string
+          word?: string | null
+        }
+        Update: {
+          client_id?: string
+          id?: string
+          imposter_tip?: string | null
+          is_host?: boolean
+          is_imposter?: boolean
+          joined_at?: string
+          name?: string
+          room_id?: string
+          word?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          category: string
+          code: string
+          created_at: string
+          hint: string | null
+          host_id: string
+          id: string
+          imposter_count: number
+          starting_player_id: string | null
+          state: string
+          word: string | null
+        }
+        Insert: {
+          category?: string
+          code: string
+          created_at?: string
+          hint?: string | null
+          host_id: string
+          id?: string
+          imposter_count?: number
+          starting_player_id?: string | null
+          state?: string
+          word?: string | null
+        }
+        Update: {
+          category?: string
+          code?: string
+          created_at?: string
+          hint?: string | null
+          host_id?: string
+          id?: string
+          imposter_count?: number
+          starting_player_id?: string | null
+          state?: string
+          word?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
