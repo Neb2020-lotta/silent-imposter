@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,12 +10,16 @@ import { toast } from "sonner";
 
 type Room = Tables<"rooms">;
 type Player = Tables<"players">;
+type Message = Tables<"messages">;
+
+const HINTS_REQUIRED = 3;
 
 export default function Room() {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [showWord, setShowWord] = useState(false);
   const clientId = getClientId();
 
@@ -42,7 +46,7 @@ export default function Room() {
     };
   }, [code, navigate]);
 
-  // Subscribe to room + players
+  // Subscribe to room + players + messages
   useEffect(() => {
     if (!room) return;
     const loadPlayers = async () => {
@@ -53,7 +57,15 @@ export default function Room() {
         .order("joined_at");
       if (data) setPlayers(data);
     };
+    const loadMessages = async () => {
+      const { data } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("room_id", room.id);
+      if (data) setMessages(data);
+    };
     loadPlayers();
+    loadMessages();
 
     const channel = supabase
       .channel(`room:${room.id}`)
@@ -70,6 +82,11 @@ export default function Room() {
         { event: "*", schema: "public", table: "players", filter: `room_id=eq.${room.id}` },
         () => loadPlayers()
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "messages", filter: `room_id=eq.${room.id}` },
+        () => loadMessages()
+      )
       .subscribe();
 
     return () => {
@@ -77,10 +94,20 @@ export default function Room() {
     };
   }, [room?.id, navigate]);
 
-  // Reset showWord when state changes back to lobby
   useEffect(() => {
     if (room?.state === "lobby") setShowWord(false);
   }, [room?.state]);
+
+  const hintCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const p of players) counts[p.id] = 0;
+    for (const m of messages) {
+      if (m.kind === "hint" && m.player_id) counts[m.player_id] = (counts[m.player_id] || 0) + 1;
+    }
+    return counts;
+  }, [messages, players]);
+
+  const allHintsGiven = players.length > 0 && players.every((p) => (hintCounts[p.id] || 0) >= HINTS_REQUIRED);
 
   if (!room) {
     return (
@@ -107,7 +134,9 @@ export default function Room() {
     }
     const tips = [...word.typeHints].sort(() => Math.random() - 0.5);
 
-    // Update each player
+    // Clear old messages and votes
+    await supabase.from("messages").delete().eq("room_id", room.id);
+
     for (let i = 0; i < players.length; i++) {
       const isImp = imposterIdx.includes(i);
       await supabase
@@ -116,6 +145,7 @@ export default function Room() {
           is_imposter: isImp,
           word: isImp ? null : word.word,
           imposter_tip: isImp ? tips.shift() || "Geheimnis" : null,
+          voted_for: null,
         })
         .eq("id", players[i].id);
     }
@@ -136,14 +166,24 @@ export default function Room() {
     await supabase.from("rooms").update({ state: "discussion" }).eq("id", room.id);
   };
 
+  const goVoting = async () => {
+    await supabase.from("rooms").update({ state: "voting" }).eq("id", room.id);
+  };
+
   const goReveal = async () => {
     await supabase.from("rooms").update({ state: "reveal" }).eq("id", room.id);
   };
 
+  const castVote = async (targetId: string) => {
+    if (!me) return;
+    await supabase.from("players").update({ voted_for: targetId }).eq("id", me.id);
+  };
+
   const newRound = async () => {
+    await supabase.from("messages").delete().eq("room_id", room.id);
     await supabase
       .from("players")
-      .update({ is_imposter: false, word: null, imposter_tip: null })
+      .update({ is_imposter: false, word: null, imposter_tip: null, voted_for: null })
       .eq("room_id", room.id);
     await supabase
       .from("rooms")
@@ -157,6 +197,15 @@ export default function Room() {
   };
 
   const starter = players.find((p) => p.id === room.starting_player_id);
+
+  // Vote tallies
+  const voteTally = useMemo(() => {
+    const t: Record<string, number> = {};
+    for (const p of players) if (p.voted_for) t[p.voted_for] = (t[p.voted_for] || 0) + 1;
+    return t;
+  }, [players]);
+  const votedCount = players.filter((p) => p.voted_for).length;
+  const allVoted = players.length > 0 && votedCount === players.length;
 
   return (
     <div
@@ -298,7 +347,7 @@ export default function Room() {
             </div>
           )}
 
-          {/* DISCUSSION - chat */}
+          {/* DISCUSSION - chat + hints */}
           {room.state === "discussion" && (
             <div
               className="rounded-3xl p-6 backdrop-blur-md space-y-4"
@@ -316,8 +365,96 @@ export default function Room() {
                   <strong style={{ color: "hsl(var(--game-accent))" }}>{starter.name}</strong> beginnt mit einem Hinweis!
                 </div>
               )}
+
+              {/* Hint progress per player */}
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                {players.map((p) => {
+                  const c = hintCounts[p.id] || 0;
+                  const done = c >= HINTS_REQUIRED;
+                  return (
+                    <div
+                      key={p.id}
+                      className="rounded-lg px-2 py-1 flex justify-between items-center"
+                      style={{
+                        background: done ? "hsla(var(--game-reveal), 0.2)" : "hsla(var(--game-input-bg), 0.6)",
+                        border: `1px solid ${done ? "hsl(var(--game-reveal))" : "hsl(var(--game-border))"}`,
+                      }}
+                    >
+                      <span>{done && "✅ "}{p.name}</span>
+                      <span className="font-bold">{c}/{HINTS_REQUIRED}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
               {me && (
-                <ChatPanel roomId={room.id} playerId={me.id} playerName={me.name} />
+                <ChatPanel roomId={room.id} playerId={me.id} playerName={me.name} hintsRequired={HINTS_REQUIRED} />
+              )}
+
+              {isHost && (
+                <Button
+                  onClick={goVoting}
+                  disabled={!allHintsGiven}
+                  className="w-full text-lg py-4"
+                  style={{ background: "var(--gradient-button-reveal)" }}
+                >
+                  {allHintsGiven ? "🗳️ Zur Abstimmung" : "Warte auf alle 3 Hinweise…"}
+                </Button>
+              )}
+              {!isHost && (
+                <p className="text-center text-sm opacity-60">
+                  {allHintsGiven
+                    ? "Alle bereit – Host startet die Abstimmung."
+                    : `Jeder muss ${HINTS_REQUIRED} Hinweise geben.`}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* VOTING */}
+          {room.state === "voting" && me && (
+            <div
+              className="rounded-3xl p-6 backdrop-blur-md space-y-4"
+              style={{
+                background: "hsla(var(--game-card-bg), 0.8)",
+                border: "2px solid hsl(var(--game-border))",
+                boxShadow: "var(--game-card-shadow)",
+              }}
+            >
+              <h2 className="text-2xl font-bold text-center" style={{ color: "hsl(var(--game-imposter))" }}>
+                🗳️ Wer ist der Imposter?
+              </h2>
+              <p className="text-center text-sm opacity-70">
+                {votedCount}/{players.length} haben abgestimmt
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {players.map((p) => {
+                  const isMe = p.client_id === clientId;
+                  const selected = me.voted_for === p.id;
+                  return (
+                    <Button
+                      key={p.id}
+                      onClick={() => !isMe && castVote(p.id)}
+                      disabled={isMe}
+                      className="py-4 text-base"
+                      style={{
+                        background: selected
+                          ? "var(--gradient-button-reveal)"
+                          : "hsla(var(--game-input-bg), 0.7)",
+                        border: `2px solid ${selected ? "hsl(var(--game-reveal))" : "hsl(var(--game-border))"}`,
+                        color: "hsl(var(--game-text))",
+                        opacity: isMe ? 0.5 : 1,
+                      }}
+                    >
+                      {selected && "✅ "}{p.name}{isMe && " (Du)"}
+                    </Button>
+                  );
+                })}
+              </div>
+              {me.voted_for && (
+                <p className="text-center text-sm" style={{ color: "hsl(var(--game-reveal))" }}>
+                  Deine Stimme wurde abgegeben. Du kannst sie noch ändern.
+                </p>
               )}
               {isHost && (
                 <Button
@@ -325,13 +462,11 @@ export default function Room() {
                   className="w-full text-lg py-4"
                   style={{ background: "var(--gradient-button-reveal)" }}
                 >
-                  🔍 Zur Auflösung
+                  {allVoted ? "🔍 Auflösen!" : `Auflösen (${votedCount}/${players.length})`}
                 </Button>
               )}
-              {!isHost && (
-                <p className="text-center text-sm opacity-60">
-                  Der Host löst auf, wenn ihr fertig diskutiert habt.
-                </p>
+              {!isHost && allVoted && (
+                <p className="text-center text-sm opacity-70">Warte auf Host für die Auflösung…</p>
               )}
             </div>
           )}
@@ -358,8 +493,39 @@ export default function Room() {
               <p>
                 Hinweis war: <em style={{ color: "hsl(var(--game-reveal))" }}>"{room.hint}"</em>
               </p>
-              <div>
-                <p className="mb-2">Imposter:</p>
+
+              <div className="pt-2">
+                <p className="mb-2 font-bold">🗳️ Abstimmungs-Ergebnis</p>
+                <div className="space-y-1 text-left max-w-sm mx-auto">
+                  {players
+                    .slice()
+                    .sort((a, b) => (voteTally[b.id] || 0) - (voteTally[a.id] || 0))
+                    .map((p) => {
+                      const votes = voteTally[p.id] || 0;
+                      return (
+                        <div
+                          key={p.id}
+                          className="flex justify-between items-center rounded-lg px-3 py-2"
+                          style={{
+                            background: p.is_imposter
+                              ? "hsla(var(--game-imposter), 0.2)"
+                              : "hsla(var(--game-input-bg), 0.6)",
+                            border: `1px solid ${p.is_imposter ? "hsl(var(--game-imposter))" : "hsl(var(--game-border))"}`,
+                          }}
+                        >
+                          <span>
+                            {p.is_imposter && "🎭 "}
+                            {p.name}
+                          </span>
+                          <span className="font-bold">{votes} Stimme{votes === 1 ? "" : "n"}</span>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <p className="mb-2">Imposter waren:</p>
                 <div className="flex flex-wrap gap-2 justify-center">
                   {players
                     .filter((p) => p.is_imposter)
@@ -373,11 +539,12 @@ export default function Room() {
                           color: "hsl(var(--game-imposter))",
                         }}
                       >
-                        {p.name}
+                        🎭 {p.name}
                       </span>
                     ))}
                 </div>
               </div>
+
               {isHost && (
                 <Button
                   onClick={newRound}
