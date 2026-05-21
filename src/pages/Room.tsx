@@ -158,12 +158,17 @@ export default function Room() {
         word: word.word,
         hint: word.hint,
         starting_player_id: starter.id,
+        current_turn_player_id: starter.id,
+        eliminated_player_id: null,
       })
       .eq("id", room.id);
   };
 
   const goDiscussion = async () => {
-    await supabase.from("rooms").update({ state: "discussion" }).eq("id", room.id);
+    await supabase
+      .from("rooms")
+      .update({ state: "discussion", current_turn_player_id: room.starting_player_id })
+      .eq("id", room.id);
   };
 
   const goVoting = async () => {
