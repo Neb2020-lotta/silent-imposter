@@ -524,15 +524,59 @@ export default function Room() {
               )}
               {isHost && (
                 <Button
+                  onClick={goElimination}
+                  disabled={votedCount === 0}
+                  className="w-full text-lg py-4"
+                  style={{ background: "var(--gradient-button-reveal)" }}
+                >
+                  {allVoted ? "👉 Spieler rauswählen" : `Spieler rauswählen (${votedCount}/${players.length})`}
+                </Button>
+              )}
+              {!isHost && allVoted && (
+                <p className="text-center text-sm opacity-70">Warte auf Host…</p>
+              )}
+            </div>
+          )}
+
+          {/* ELIMINATION */}
+          {room.state === "elimination" && eliminatedPlayer && (
+            <div
+              className="rounded-3xl p-8 backdrop-blur-md text-center space-y-4"
+              style={{
+                background: "hsla(var(--game-card-bg), 0.8)",
+                border: "2px solid hsl(var(--game-imposter))",
+                boxShadow: "var(--game-card-shadow)",
+              }}
+            >
+              <h2 className="text-2xl font-bold" style={{ color: "hsl(var(--game-imposter))" }}>
+                👉 Rausgewählt
+              </h2>
+              <p className="opacity-80">Die Mehrheit hat entschieden:</p>
+              <div
+                className="mx-auto inline-block px-6 py-4 rounded-2xl"
+                style={{
+                  background: "hsla(var(--game-imposter), 0.2)",
+                  border: "2px solid hsl(var(--game-imposter))",
+                }}
+              >
+                <div className="text-3xl font-bold" style={{ color: "hsl(var(--game-imposter))" }}>
+                  {eliminatedPlayer.name}
+                </div>
+                <div className="text-sm opacity-70 mt-1">
+                  {voteTally[eliminatedPlayer.id] || 0} Stimme{(voteTally[eliminatedPlayer.id] || 0) === 1 ? "" : "n"}
+                </div>
+              </div>
+              <p className="opacity-70 italic">War es wirklich der Imposter?</p>
+              {isHost ? (
+                <Button
                   onClick={goReveal}
                   className="w-full text-lg py-4"
                   style={{ background: "var(--gradient-button-reveal)" }}
                 >
-                  {allVoted ? "🔍 Auflösen!" : `Auflösen (${votedCount}/${players.length})`}
+                  🔍 Jetzt auflösen!
                 </Button>
-              )}
-              {!isHost && allVoted && (
-                <p className="text-center text-sm opacity-70">Warte auf Host für die Auflösung…</p>
+              ) : (
+                <p className="text-sm opacity-60">Warte auf Host für die Auflösung…</p>
               )}
             </div>
           )}
