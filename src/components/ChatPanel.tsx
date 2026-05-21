@@ -11,9 +11,11 @@ interface Props {
   playerId: string;
   playerName: string;
   hintsRequired?: number;
+  canSendHint?: boolean;
+  onHintSent?: () => void | Promise<void>;
 }
 
-export default function ChatPanel({ roomId, playerId, playerName, hintsRequired = 3 }: Props) {
+export default function ChatPanel({ roomId, playerId, playerName, hintsRequired = 3, canSendHint = true, onHintSent }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -51,7 +53,7 @@ export default function ChatPanel({ roomId, playerId, playerName, hintsRequired 
   const send = async (kind: "chat" | "hint") => {
     const content = text.trim();
     if (!content) return;
-    if (kind === "hint" && myHintCount >= hintsRequired) return;
+    if (kind === "hint" && (myHintCount >= hintsRequired || !canSendHint)) return;
     setText("");
     await supabase.from("messages").insert({
       room_id: roomId,
@@ -60,6 +62,7 @@ export default function ChatPanel({ roomId, playerId, playerName, hintsRequired 
       content: content.slice(0, 500),
       kind,
     });
+    if (kind === "hint") await onHintSent?.();
   };
 
   return (
@@ -140,8 +143,9 @@ export default function ChatPanel({ roomId, playerId, playerName, hintsRequired 
         </Button>
         <Button
           onClick={() => send("hint")}
-          disabled={myHintCount >= hintsRequired}
+          disabled={myHintCount >= hintsRequired || !canSendHint}
           style={{ background: "var(--gradient-button-reveal)" }}
+          title={!canSendHint ? "Du bist nicht dran" : ""}
         >
           💡 Hinweis
         </Button>

@@ -158,12 +158,17 @@ export default function Room() {
         word: word.word,
         hint: word.hint,
         starting_player_id: starter.id,
+        current_turn_player_id: starter.id,
+        eliminated_player_id: null,
       })
       .eq("id", room.id);
   };
 
   const goDiscussion = async () => {
-    await supabase.from("rooms").update({ state: "discussion" }).eq("id", room.id);
+    await supabase
+      .from("rooms")
+      .update({ state: "discussion", current_turn_player_id: room.starting_player_id })
+      .eq("id", room.id);
   };
 
   const goVoting = async () => {
@@ -187,7 +192,14 @@ export default function Room() {
       .eq("room_id", room.id);
     await supabase
       .from("rooms")
-      .update({ state: "lobby", word: null, hint: null, starting_player_id: null })
+      .update({
+        state: "lobby",
+        word: null,
+        hint: null,
+        starting_player_id: null,
+        current_turn_player_id: null,
+        eliminated_player_id: null,
+      })
       .eq("id", room.id);
   };
 
@@ -197,6 +209,23 @@ export default function Room() {
   };
 
   const starter = players.find((p) => p.id === room.starting_player_id);
+  const currentTurnPlayer = players.find((p) => p.id === room.current_turn_player_id);
+  const isMyTurn = !!me && room.current_turn_player_id === me.id && (hintCounts[me.id] || 0) < HINTS_REQUIRED;
+
+  const advanceTurn = async () => {
+    if (!me) return;
+    const newCounts = { ...hintCounts, [me.id]: (hintCounts[me.id] || 0) + 1 };
+    const idx = players.findIndex((p) => p.id === room.current_turn_player_id);
+    let next: string | null = null;
+    for (let i = 1; i <= players.length; i++) {
+      const p = players[(idx + i) % players.length];
+      if ((newCounts[p.id] || 0) < HINTS_REQUIRED) {
+        next = p.id;
+        break;
+      }
+    }
+    await supabase.from("rooms").update({ current_turn_player_id: next }).eq("id", room.id);
+  };
 
   // Vote tallies
   const voteTally = useMemo(() => {
@@ -206,6 +235,19 @@ export default function Room() {
   }, [players]);
   const votedCount = players.filter((p) => p.voted_for).length;
   const allVoted = players.length > 0 && votedCount === players.length;
+
+  const goElimination = async () => {
+    const max = Math.max(0, ...Object.values(voteTally));
+    if (max === 0) return toast.error("Noch keine Stimmen");
+    const top = Object.keys(voteTally).filter((id) => voteTally[id] === max);
+    const chosen = top[Math.floor(Math.random() * top.length)];
+    await supabase
+      .from("rooms")
+      .update({ state: "elimination", eliminated_player_id: chosen })
+      .eq("id", room.id);
+  };
+
+  const eliminatedPlayer = players.find((p) => p.id === room.eliminated_player_id);
 
   return (
     <div
@@ -360,27 +402,44 @@ export default function Room() {
               <h2 className="text-2xl font-bold text-center" style={{ color: "hsl(var(--game-accent))" }}>
                 🔍 Diskussion
               </h2>
-              {starter && (
+              {currentTurnPlayer ? (
                 <div className="text-center p-3 rounded-xl" style={{ background: "hsla(var(--game-accent), 0.15)" }}>
-                  <strong style={{ color: "hsl(var(--game-accent))" }}>{starter.name}</strong> beginnt mit einem Hinweis!
+                  {isMyTurn ? (
+                    <>
+                      <strong style={{ color: "hsl(var(--game-accent))" }}>Du bist dran!</strong> Gib einen Hinweis.
+                    </>
+                  ) : (
+                    <>
+                      <strong style={{ color: "hsl(var(--game-accent))" }}>{currentTurnPlayer.name}</strong> ist dran mit einem Hinweis.
+                    </>
+                  )}
                 </div>
-              )}
+              ) : starter ? (
+                <div className="text-center p-3 rounded-xl" style={{ background: "hsla(var(--game-reveal), 0.15)" }}>
+                  Alle Hinweise gegeben – ab zur Abstimmung!
+                </div>
+              ) : null}
 
               {/* Hint progress per player */}
               <div className="grid grid-cols-2 gap-2 text-sm">
                 {players.map((p) => {
                   const c = hintCounts[p.id] || 0;
                   const done = c >= HINTS_REQUIRED;
+                  const turn = p.id === room.current_turn_player_id;
                   return (
                     <div
                       key={p.id}
                       className="rounded-lg px-2 py-1 flex justify-between items-center"
                       style={{
-                        background: done ? "hsla(var(--game-reveal), 0.2)" : "hsla(var(--game-input-bg), 0.6)",
-                        border: `1px solid ${done ? "hsl(var(--game-reveal))" : "hsl(var(--game-border))"}`,
+                        background: done
+                          ? "hsla(var(--game-reveal), 0.2)"
+                          : turn
+                          ? "hsla(var(--game-accent), 0.25)"
+                          : "hsla(var(--game-input-bg), 0.6)",
+                        border: `1px solid ${done ? "hsl(var(--game-reveal))" : turn ? "hsl(var(--game-accent))" : "hsl(var(--game-border))"}`,
                       }}
                     >
-                      <span>{done && "✅ "}{p.name}</span>
+                      <span>{done ? "✅ " : turn ? "🎤 " : ""}{p.name}</span>
                       <span className="font-bold">{c}/{HINTS_REQUIRED}</span>
                     </div>
                   );
@@ -388,7 +447,14 @@ export default function Room() {
               </div>
 
               {me && (
-                <ChatPanel roomId={room.id} playerId={me.id} playerName={me.name} hintsRequired={HINTS_REQUIRED} />
+                <ChatPanel
+                  roomId={room.id}
+                  playerId={me.id}
+                  playerName={me.name}
+                  hintsRequired={HINTS_REQUIRED}
+                  canSendHint={isMyTurn}
+                  onHintSent={advanceTurn}
+                />
               )}
 
               {isHost && (
@@ -458,15 +524,59 @@ export default function Room() {
               )}
               {isHost && (
                 <Button
+                  onClick={goElimination}
+                  disabled={votedCount === 0}
+                  className="w-full text-lg py-4"
+                  style={{ background: "var(--gradient-button-reveal)" }}
+                >
+                  {allVoted ? "👉 Spieler rauswählen" : `Spieler rauswählen (${votedCount}/${players.length})`}
+                </Button>
+              )}
+              {!isHost && allVoted && (
+                <p className="text-center text-sm opacity-70">Warte auf Host…</p>
+              )}
+            </div>
+          )}
+
+          {/* ELIMINATION */}
+          {room.state === "elimination" && eliminatedPlayer && (
+            <div
+              className="rounded-3xl p-8 backdrop-blur-md text-center space-y-4"
+              style={{
+                background: "hsla(var(--game-card-bg), 0.8)",
+                border: "2px solid hsl(var(--game-imposter))",
+                boxShadow: "var(--game-card-shadow)",
+              }}
+            >
+              <h2 className="text-2xl font-bold" style={{ color: "hsl(var(--game-imposter))" }}>
+                👉 Rausgewählt
+              </h2>
+              <p className="opacity-80">Die Mehrheit hat entschieden:</p>
+              <div
+                className="mx-auto inline-block px-6 py-4 rounded-2xl"
+                style={{
+                  background: "hsla(var(--game-imposter), 0.2)",
+                  border: "2px solid hsl(var(--game-imposter))",
+                }}
+              >
+                <div className="text-3xl font-bold" style={{ color: "hsl(var(--game-imposter))" }}>
+                  {eliminatedPlayer.name}
+                </div>
+                <div className="text-sm opacity-70 mt-1">
+                  {voteTally[eliminatedPlayer.id] || 0} Stimme{(voteTally[eliminatedPlayer.id] || 0) === 1 ? "" : "n"}
+                </div>
+              </div>
+              <p className="opacity-70 italic">War es wirklich der Imposter?</p>
+              {isHost ? (
+                <Button
                   onClick={goReveal}
                   className="w-full text-lg py-4"
                   style={{ background: "var(--gradient-button-reveal)" }}
                 >
-                  {allVoted ? "🔍 Auflösen!" : `Auflösen (${votedCount}/${players.length})`}
+                  🔍 Jetzt auflösen!
                 </Button>
-              )}
-              {!isHost && allVoted && (
-                <p className="text-center text-sm opacity-70">Warte auf Host für die Auflösung…</p>
+              ) : (
+                <p className="text-sm opacity-60">Warte auf Host für die Auflösung…</p>
               )}
             </div>
           )}

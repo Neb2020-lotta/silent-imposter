@@ -104,6 +104,8 @@ export type Database = {
           category: string
           code: string
           created_at: string
+          current_turn_player_id: string | null
+          eliminated_player_id: string | null
           hint: string | null
           host_id: string
           id: string
@@ -116,6 +118,8 @@ export type Database = {
           category?: string
           code: string
           created_at?: string
+          current_turn_player_id?: string | null
+          eliminated_player_id?: string | null
           hint?: string | null
           host_id: string
           id?: string
@@ -128,6 +132,8 @@ export type Database = {
           category?: string
           code?: string
           created_at?: string
+          current_turn_player_id?: string | null
+          eliminated_player_id?: string | null
           hint?: string | null
           host_id?: string
           id?: string
