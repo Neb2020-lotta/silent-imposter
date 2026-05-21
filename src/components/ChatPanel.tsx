@@ -143,8 +143,9 @@ export default function ChatPanel({ roomId, playerId, playerName, hintsRequired 
         </Button>
         <Button
           onClick={() => send("hint")}
-          disabled={myHintCount >= hintsRequired}
+          disabled={myHintCount >= hintsRequired || !canSendHint}
           style={{ background: "var(--gradient-button-reveal)" }}
+          title={!canSendHint ? "Du bist nicht dran" : ""}
         >
           💡 Hinweis
         </Button>
