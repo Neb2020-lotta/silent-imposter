@@ -53,7 +53,7 @@ export default function ChatPanel({ roomId, playerId, playerName, hintsRequired 
   const send = async (kind: "chat" | "hint") => {
     const content = text.trim();
     if (!content) return;
-    if (kind === "hint" && myHintCount >= hintsRequired) return;
+    if (kind === "hint" && (myHintCount >= hintsRequired || !canSendHint)) return;
     setText("");
     await supabase.from("messages").insert({
       room_id: roomId,
@@ -62,6 +62,7 @@ export default function ChatPanel({ roomId, playerId, playerName, hintsRequired 
       content: content.slice(0, 500),
       kind,
     });
+    if (kind === "hint") await onHintSent?.();
   };
 
   return (
