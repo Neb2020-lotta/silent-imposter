@@ -192,7 +192,14 @@ export default function Room() {
       .eq("room_id", room.id);
     await supabase
       .from("rooms")
-      .update({ state: "lobby", word: null, hint: null, starting_player_id: null })
+      .update({
+        state: "lobby",
+        word: null,
+        hint: null,
+        starting_player_id: null,
+        current_turn_player_id: null,
+        eliminated_player_id: null,
+      })
       .eq("id", room.id);
   };
 
@@ -202,6 +209,23 @@ export default function Room() {
   };
 
   const starter = players.find((p) => p.id === room.starting_player_id);
+  const currentTurnPlayer = players.find((p) => p.id === room.current_turn_player_id);
+  const isMyTurn = !!me && room.current_turn_player_id === me.id && (hintCounts[me.id] || 0) < HINTS_REQUIRED;
+
+  const advanceTurn = async () => {
+    if (!me) return;
+    const newCounts = { ...hintCounts, [me.id]: (hintCounts[me.id] || 0) + 1 };
+    const idx = players.findIndex((p) => p.id === room.current_turn_player_id);
+    let next: string | null = null;
+    for (let i = 1; i <= players.length; i++) {
+      const p = players[(idx + i) % players.length];
+      if ((newCounts[p.id] || 0) < HINTS_REQUIRED) {
+        next = p.id;
+        break;
+      }
+    }
+    await supabase.from("rooms").update({ current_turn_player_id: next }).eq("id", room.id);
+  };
 
   // Vote tallies
   const voteTally = useMemo(() => {
@@ -211,6 +235,19 @@ export default function Room() {
   }, [players]);
   const votedCount = players.filter((p) => p.voted_for).length;
   const allVoted = players.length > 0 && votedCount === players.length;
+
+  const goElimination = async () => {
+    const max = Math.max(0, ...Object.values(voteTally));
+    if (max === 0) return toast.error("Noch keine Stimmen");
+    const top = Object.keys(voteTally).filter((id) => voteTally[id] === max);
+    const chosen = top[Math.floor(Math.random() * top.length)];
+    await supabase
+      .from("rooms")
+      .update({ state: "elimination", eliminated_player_id: chosen })
+      .eq("id", room.id);
+  };
+
+  const eliminatedPlayer = players.find((p) => p.id === room.eliminated_player_id);
 
   return (
     <div
