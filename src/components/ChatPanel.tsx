@@ -11,9 +11,11 @@ interface Props {
   playerId: string;
   playerName: string;
   hintsRequired?: number;
+  canSendHint?: boolean;
+  onHintSent?: () => void | Promise<void>;
 }
 
-export default function ChatPanel({ roomId, playerId, playerName, hintsRequired = 3 }: Props) {
+export default function ChatPanel({ roomId, playerId, playerName, hintsRequired = 3, canSendHint = true, onHintSent }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
