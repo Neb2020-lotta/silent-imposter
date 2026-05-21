@@ -402,27 +402,44 @@ export default function Room() {
               <h2 className="text-2xl font-bold text-center" style={{ color: "hsl(var(--game-accent))" }}>
                 🔍 Diskussion
               </h2>
-              {starter && (
+              {currentTurnPlayer ? (
                 <div className="text-center p-3 rounded-xl" style={{ background: "hsla(var(--game-accent), 0.15)" }}>
-                  <strong style={{ color: "hsl(var(--game-accent))" }}>{starter.name}</strong> beginnt mit einem Hinweis!
+                  {isMyTurn ? (
+                    <>
+                      <strong style={{ color: "hsl(var(--game-accent))" }}>Du bist dran!</strong> Gib einen Hinweis.
+                    </>
+                  ) : (
+                    <>
+                      <strong style={{ color: "hsl(var(--game-accent))" }}>{currentTurnPlayer.name}</strong> ist dran mit einem Hinweis.
+                    </>
+                  )}
                 </div>
-              )}
+              ) : starter ? (
+                <div className="text-center p-3 rounded-xl" style={{ background: "hsla(var(--game-reveal), 0.15)" }}>
+                  Alle Hinweise gegeben – ab zur Abstimmung!
+                </div>
+              ) : null}
 
               {/* Hint progress per player */}
               <div className="grid grid-cols-2 gap-2 text-sm">
                 {players.map((p) => {
                   const c = hintCounts[p.id] || 0;
                   const done = c >= HINTS_REQUIRED;
+                  const turn = p.id === room.current_turn_player_id;
                   return (
                     <div
                       key={p.id}
                       className="rounded-lg px-2 py-1 flex justify-between items-center"
                       style={{
-                        background: done ? "hsla(var(--game-reveal), 0.2)" : "hsla(var(--game-input-bg), 0.6)",
-                        border: `1px solid ${done ? "hsl(var(--game-reveal))" : "hsl(var(--game-border))"}`,
+                        background: done
+                          ? "hsla(var(--game-reveal), 0.2)"
+                          : turn
+                          ? "hsla(var(--game-accent), 0.25)"
+                          : "hsla(var(--game-input-bg), 0.6)",
+                        border: `1px solid ${done ? "hsl(var(--game-reveal))" : turn ? "hsl(var(--game-accent))" : "hsl(var(--game-border))"}`,
                       }}
                     >
-                      <span>{done && "✅ "}{p.name}</span>
+                      <span>{done ? "✅ " : turn ? "🎤 " : ""}{p.name}</span>
                       <span className="font-bold">{c}/{HINTS_REQUIRED}</span>
                     </div>
                   );
@@ -430,7 +447,14 @@ export default function Room() {
               </div>
 
               {me && (
-                <ChatPanel roomId={room.id} playerId={me.id} playerName={me.name} hintsRequired={HINTS_REQUIRED} />
+                <ChatPanel
+                  roomId={room.id}
+                  playerId={me.id}
+                  playerName={me.name}
+                  hintsRequired={HINTS_REQUIRED}
+                  canSendHint={isMyTurn}
+                  onHintSent={advanceTurn}
+                />
               )}
 
               {isHost && (
