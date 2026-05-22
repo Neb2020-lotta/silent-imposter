@@ -22,30 +22,46 @@ export default function Home() {
   const createRoom = async () => {
     if (!name.trim()) return toast.error("Bitte gib einen Namen ein");
     setBusy(true);
-    setStoredName(name.trim());
-    const clientId = getClientId();
-    let roomCode = "";
-    let roomId: string | null = null;
-    for (let i = 0; i < 5 && !roomId; i++) {
-      roomCode = generateRoomCode();
-      const { data, error } = await supabase
-        .from("rooms")
-        .insert({ code: roomCode, host_id: clientId, category, imposter_count: imposterCount })
-        .select("id")
-        .single();
-      if (!error && data) roomId = data.id;
-    }
-    if (!roomId) {
+    try {
+      setStoredName(name.trim());
+      const clientId = getClientId();
+      let roomCode = "";
+      let roomId: string | null = null;
+      let lastError: unknown = null;
+      for (let i = 0; i < 5 && !roomId; i++) {
+        roomCode = generateRoomCode();
+        const { data, error } = await supabase
+          .from("rooms")
+          .insert({ code: roomCode, host_id: clientId, category, imposter_count: imposterCount })
+          .select("id")
+          .single();
+        if (!error && data) roomId = data.id;
+        else lastError = error;
+      }
+      if (!roomId) {
+        console.error("Room creation failed:", lastError);
+        toast.error("Raum konnte nicht erstellt werden");
+        setBusy(false);
+        return;
+      }
+      const { error: pErr } = await supabase.from("players").insert({
+        room_id: roomId,
+        client_id: clientId,
+        name: name.trim(),
+        is_host: true,
+      });
+      if (pErr) {
+        console.error("Player insert failed:", pErr);
+        toast.error("Beitritt fehlgeschlagen: " + pErr.message);
+        setBusy(false);
+        return;
+      }
+      navigate(`/room/${roomCode}`);
+    } catch (e) {
+      console.error(e);
+      toast.error("Unerwarteter Fehler");
       setBusy(false);
-      return toast.error("Raum konnte nicht erstellt werden");
     }
-    await supabase.from("players").insert({
-      room_id: roomId,
-      client_id: clientId,
-      name: name.trim(),
-      is_host: true,
-    });
-    navigate(`/room/${roomCode}`);
   };
 
   const joinRoom = async () => {
