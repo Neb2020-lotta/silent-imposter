@@ -109,6 +109,12 @@ export default function Room() {
 
   const allHintsGiven = players.length > 0 && players.every((p) => (hintCounts[p.id] || 0) >= HINTS_REQUIRED);
 
+  const pre_voteTally = useMemo(() => {
+    const t: Record<string, number> = {};
+    for (const p of players) if (p.voted_for) t[p.voted_for] = (t[p.voted_for] || 0) + 1;
+    return t;
+  }, [players]);
+
   if (!room) {
     return (
       <div
@@ -227,12 +233,8 @@ export default function Room() {
     await supabase.from("rooms").update({ current_turn_player_id: next }).eq("id", room.id);
   };
 
-  // Vote tallies
-  const voteTally = useMemo(() => {
-    const t: Record<string, number> = {};
-    for (const p of players) if (p.voted_for) t[p.voted_for] = (t[p.voted_for] || 0) + 1;
-    return t;
-  }, [players]);
+  // Vote tallies (must stay above any early return to keep hook order stable)
+  const voteTally = pre_voteTally;
   const votedCount = players.filter((p) => p.voted_for).length;
   const allVoted = players.length > 0 && votedCount === players.length;
 
