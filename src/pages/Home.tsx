@@ -123,7 +123,7 @@ export default function Home() {
             animation: "pulsateGlow 2.5s infinite alternate",
           }}
         >
-          🎮 IMPOSTER SPLASH
+          🤫 SILENT IMPOSTER
         </h1>
 
         <div
