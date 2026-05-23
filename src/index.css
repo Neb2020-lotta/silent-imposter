@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Rubik:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -47,36 +49,36 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* Game-specific design tokens */
-    --game-bg-start: 246 78% 11%;
-    --game-bg-mid: 246 37% 25%;
-    --game-bg-end: 246 32% 18%;
-    --game-card-bg: 246 52% 11%;
-    --game-text: 246 100% 94%;
-    --game-accent: 336 83% 47%;
-    --game-secondary: 195 91% 60%;
-    --game-imposter: 336 100% 59%;
-    --game-restart: 213 94% 68%;
-    --game-reveal: 43 100% 59%;
-    --game-border: 279 86% 40%;
-    --game-input-bg: 227 68% 12%;
-    --game-troll: 324 81% 51%;
-    --game-success: 123 41% 45%;
-    
+    /* Silent Imposter — Charcoal & Ember */
+    --game-bg-start: 0 0% 10%;        /* #1a1a1a */
+    --game-bg-mid:   0 0% 8%;
+    --game-bg-end:   0 0% 14%;        /* #242424 */
+    --game-card-bg:  0 0% 18%;        /* #2d2d2d */
+    --game-text:     0 0% 96%;
+    --game-accent:   14 79% 57%;      /* ember #e85d3a */
+    --game-secondary: 0 0% 29%;       /* #4a4a4a */
+    --game-imposter: 14 79% 57%;
+    --game-restart:  0 0% 96%;
+    --game-reveal:   14 79% 57%;
+    --game-border:   0 0% 29%;        /* #4a4a4a */
+    --game-input-bg: 0 0% 14%;
+    --game-troll:    14 79% 57%;
+    --game-success:  14 79% 57%;
+
     /* Gradients */
-    --gradient-game-bg: linear-gradient(135deg, hsl(var(--game-bg-start)) 0%, hsl(var(--game-bg-mid)) 50%, hsl(var(--game-bg-end)) 100%);
-    --gradient-game-title: linear-gradient(90deg, hsl(var(--game-accent)) 0%, hsl(var(--game-secondary)) 100%);
-    --gradient-card-overlay: linear-gradient(to bottom right, transparent 0%, hsla(var(--game-border), 0.1) 50%, transparent 100%);
-    --gradient-button-primary: linear-gradient(45deg, hsl(var(--primary)) 0%, hsl(var(--game-secondary)) 100%);
-    --gradient-button-reveal: linear-gradient(45deg, hsl(var(--game-reveal)) 0%, 43 100% 70% 100%);
-    --gradient-button-restart: linear-gradient(45deg, hsl(var(--game-restart)) 0%, 213 100% 77% 100%);
-    --gradient-button-troll: linear-gradient(45deg, hsl(var(--game-troll)) 0%, hsl(var(--game-accent)) 100%);
-    --gradient-button-success: linear-gradient(45deg, hsl(var(--game-success)) 0%, 123 70% 60% 100%);
-    
+    --gradient-game-bg: linear-gradient(180deg, hsl(var(--game-bg-start)) 0%, hsl(var(--game-bg-end)) 100%);
+    --gradient-game-title: linear-gradient(90deg, hsl(var(--game-text)) 0%, hsl(var(--game-accent)) 100%);
+    --gradient-card-overlay: linear-gradient(to bottom right, transparent 0%, hsla(var(--game-accent), 0.06) 50%, transparent 100%);
+    --gradient-button-primary: linear-gradient(180deg, hsl(var(--game-accent)) 0%, hsl(14 70% 48%) 100%);
+    --gradient-button-reveal: linear-gradient(180deg, hsl(var(--game-accent)) 0%, hsl(14 70% 48%) 100%);
+    --gradient-button-restart: linear-gradient(180deg, hsl(0 0% 22%) 0%, hsl(0 0% 14%) 100%);
+    --gradient-button-troll: linear-gradient(180deg, hsl(var(--game-accent)) 0%, hsl(14 70% 48%) 100%);
+    --gradient-button-success: linear-gradient(180deg, hsl(0 0% 22%) 0%, hsl(0 0% 14%) 100%);
+
     /* Effects */
-    --game-neon-glow: 0 0 10px hsla(var(--game-accent), 0.7);
-    --game-card-shadow: 0 10px 30px hsla(0, 0%, 0%, 0.5), 0 0 15px hsla(var(--game-border), 0.3);
-    --game-button-shadow: 0 5px 15px hsla(0, 0%, 0%, 0.3);
+    --game-neon-glow: 0 0 20px hsla(var(--game-accent), 0.35);
+    --game-card-shadow: 0 20px 50px hsla(0, 0%, 0%, 0.6), 0 0 0 1px hsla(0, 0%, 100%, 0.04);
+    --game-button-shadow: 0 6px 18px hsla(0, 0%, 0%, 0.5);
   }
 
   .dark {

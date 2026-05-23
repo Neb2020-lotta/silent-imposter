@@ -106,138 +106,275 @@ export default function Home() {
   };
 
   const inputStyle = {
-    background: "hsla(var(--game-input-bg), 0.7)",
-    border: "2px solid hsl(var(--game-border))",
+    background: "hsl(var(--game-input-bg))",
+    border: "1px solid hsl(var(--game-border))",
     color: "hsl(var(--game-text))",
+    borderRadius: 2,
   };
 
-  return (
-    <div className="min-h-screen font-poppins text-[color:hsl(var(--game-text))]" style={{ background: "var(--gradient-game-bg)" }}>
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4">
-        <h1
-          className="text-4xl md:text-6xl font-game font-bold mb-8 text-center"
-          style={{
-            background: "var(--gradient-game-title)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            animation: "pulsateGlow 2.5s infinite alternate",
-          }}
-        >
-          🤫 SILENT IMPOSTER
-        </h1>
+  const mono = "'Space Mono', monospace";
+  const rubik = "'Rubik', sans-serif";
 
-        <div
-          className="w-full max-w-md rounded-3xl p-8 backdrop-blur-md space-y-6"
-          style={{
-            background: "hsla(var(--game-card-bg), 0.8)",
-            border: "2px solid hsl(var(--game-border))",
-            boxShadow: "var(--game-card-shadow)",
-          }}
-        >
+  return (
+    <div
+      className="flex min-h-screen w-full flex-col md:flex-row"
+      style={{ background: "hsl(var(--game-bg-start))", color: "hsl(var(--game-text))" }}
+    >
+      {/* LEFT — Brand */}
+      <aside
+        className="flex md:w-1/2 items-center justify-center px-8 py-16 md:py-12 border-b md:border-b-0 md:border-r"
+        style={{
+          borderColor: "hsl(var(--game-card-bg))",
+          background:
+            "linear-gradient(180deg, hsl(var(--game-bg-start)) 0%, hsl(var(--game-bg-end)) 100%)",
+        }}
+      >
+        <div className="relative">
+          <div
+            className="absolute -top-12 -left-8 h-32 w-32 rounded-full blur-3xl"
+            style={{ background: "hsl(var(--game-accent))", opacity: 0.12 }}
+          />
+          <h1
+            className="relative text-5xl md:text-6xl font-bold tracking-tighter uppercase leading-[0.95]"
+            style={{ fontFamily: mono }}
+          >
+            Silent<br />
+            <span style={{ color: "hsl(var(--game-accent))" }}>Imposter</span>
+          </h1>
+          <div className="mt-5 h-[3px] w-12" style={{ background: "hsl(var(--game-accent))" }} />
+          <p
+            className="mt-6 text-xs uppercase tracking-[0.25em]"
+            style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
+          >
+            // Underground Party Protocol
+          </p>
+        </div>
+      </aside>
+
+      {/* RIGHT — Actions */}
+      <main className="flex md:w-1/2 items-center justify-center px-8 py-12">
+        <div className="w-full max-w-sm space-y-8">
+          <div className="space-y-2">
+            <p
+              className="text-xs font-bold tracking-widest uppercase italic"
+              style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
+            >
+              Session Select
+            </p>
+            <h2 className="text-xl font-medium" style={{ fontFamily: rubik }}>
+              {mode === "menu"
+                ? "Was willst du tun?"
+                : mode === "host"
+                ? "Neuen Raum erstellen"
+                : "Raum beitreten"}
+            </h2>
+          </div>
+
           {mode === "menu" && (
-            <div className="space-y-4">
-              <p className="text-center text-lg opacity-80">Was willst du tun?</p>
-              <Button
+            <div className="grid gap-4">
+              <ActionCard
+                title="Server hosten"
+                tag="Host Panel"
+                primary
                 onClick={() => setMode("host")}
-                className="w-full text-xl py-6"
-                style={{ background: "var(--gradient-button-primary)" }}
-              >
-                👑 Server hosten
-              </Button>
-              <Button
+              />
+              <ActionCard
+                title="Server beitreten"
+                tag="Client Access"
                 onClick={() => setMode("join")}
-                className="w-full text-xl py-6"
-                style={{ background: "var(--gradient-button-success)" }}
-              >
-                🚪 Server beitreten
-              </Button>
+              />
             </div>
           )}
 
           {mode !== "menu" && (
-            <div>
-              <label className="block text-lg mb-2">Dein Name</label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Wie heißt du?"
-                maxLength={20}
-                className="text-center text-lg"
-                style={inputStyle}
-              />
-            </div>
-          )}
-
-          {mode === "join" && (
-            <div className="space-y-3">
-              <h2 className="text-xl font-bold text-center">🚪 Raum beitreten</h2>
-              <Input
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="6-stelliger Code"
-                maxLength={6}
-                className="text-center text-2xl tracking-widest font-bold"
-                style={inputStyle}
-              />
-              <Button
-                onClick={joinRoom}
-                disabled={busy}
-                className="w-full text-lg py-4"
-                style={{ background: "var(--gradient-button-success)" }}
-              >
-                Beitreten
-              </Button>
-              <Button variant="ghost" onClick={() => setMode("menu")} className="w-full">
-                ← Zurück
-              </Button>
-            </div>
-          )}
-
-          {mode === "host" && (
-            <div className="space-y-3">
-              <h2 className="text-xl font-bold text-center">✨ Neuen Raum erstellen</h2>
-              <div>
-                <label className="block text-sm mb-1">Thema</label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger style={inputStyle}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.keys(wordCategories).map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Anzahl Imposter</label>
+            <div className="space-y-4">
+              <Field label="Dein Name">
                 <Input
-                  type="number"
-                  min={1}
-                  max={4}
-                  value={imposterCount}
-                  onChange={(e) => setImposterCount(Math.max(1, Math.min(4, parseInt(e.target.value) || 1)))}
-                  className="text-center"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Wie heißt du?"
+                  maxLength={20}
                   style={inputStyle}
                 />
-              </div>
+              </Field>
+
+              {mode === "host" && (
+                <>
+                  <Field label="Thema">
+                    <Select value={category} onValueChange={setCategory}>
+                      <SelectTrigger style={inputStyle}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.keys(wordCategories).map((c) => (
+                          <SelectItem key={c} value={c}>
+                            {c}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="Anzahl Imposter">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={4}
+                      value={imposterCount}
+                      onChange={(e) =>
+                        setImposterCount(Math.max(1, Math.min(4, parseInt(e.target.value) || 1)))
+                      }
+                      style={inputStyle}
+                    />
+                  </Field>
+                  <PrimaryButton onClick={createRoom} disabled={busy}>
+                    Raum erstellen
+                  </PrimaryButton>
+                </>
+              )}
+
+              {mode === "join" && (
+                <>
+                  <Field label="Raum-Code">
+                    <Input
+                      value={code}
+                      onChange={(e) => setCode(e.target.value.toUpperCase())}
+                      placeholder="6-stelliger Code"
+                      maxLength={6}
+                      className="text-center text-2xl tracking-[0.4em] font-bold"
+                      style={{ ...inputStyle, fontFamily: mono }}
+                    />
+                  </Field>
+                  <PrimaryButton onClick={joinRoom} disabled={busy}>
+                    Beitreten
+                  </PrimaryButton>
+                </>
+              )}
+
               <Button
-                onClick={createRoom}
-                disabled={busy}
-                className="w-full text-lg py-4"
-                style={{ background: "var(--gradient-button-primary)" }}
+                variant="ghost"
+                onClick={() => setMode("menu")}
+                className="w-full text-xs uppercase tracking-widest"
+                style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
               >
-                Raum erstellen
-              </Button>
-              <Button variant="ghost" onClick={() => setMode("menu")} className="w-full">
                 ← Zurück
               </Button>
             </div>
           )}
+
+          <div
+            className="flex items-center space-x-3 pt-4 border-t"
+            style={{ borderColor: "hsl(var(--game-card-bg))" }}
+          >
+            <div
+              className="h-2 w-2 rounded-full animate-pulse"
+              style={{ background: "hsl(var(--game-accent))" }}
+            />
+            <span
+              className="text-[10px] uppercase tracking-tighter"
+              style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
+            >
+              System ready: listening for commands
+            </span>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <label
+        className="block text-[10px] uppercase tracking-widest"
+        style={{ fontFamily: "'Space Mono', monospace", color: "hsl(var(--game-secondary))" }}
+      >
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+function ActionCard({
+  title,
+  tag,
+  primary,
+  onClick,
+}: {
+  title: string;
+  tag: string;
+  primary?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="group relative flex items-center justify-between overflow-hidden p-5 text-left transition-all"
+      style={{
+        borderRadius: 2,
+        border: `1px solid ${primary ? "hsl(var(--game-border))" : "hsl(var(--game-card-bg))"}`,
+        background: primary ? "hsl(var(--game-card-bg))" : "transparent",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = "hsl(var(--game-accent))";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = primary
+          ? "hsl(var(--game-border))"
+          : "hsl(var(--game-card-bg))";
+      }}
+    >
+      <div className="relative z-10">
+        <span
+          className="block text-[10px] uppercase tracking-widest"
+          style={{ fontFamily: "'Space Mono', monospace", color: "hsl(var(--game-secondary))" }}
+        >
+          {tag}
+        </span>
+        <span
+          className="text-lg font-medium"
+          style={{ fontFamily: "'Rubik', sans-serif", color: "hsl(var(--game-text))" }}
+        >
+          {title}
+        </span>
+      </div>
+      <svg
+        className="h-5 w-5 transition-transform group-hover:translate-x-1"
+        style={{ color: "hsl(var(--game-accent))" }}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+      </svg>
+    </button>
+  );
+}
+
+function PrimaryButton({
+  children,
+  onClick,
+  disabled,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="w-full py-4 px-6 text-sm font-bold uppercase tracking-wider transition-all disabled:opacity-50"
+      style={{
+        fontFamily: "'Space Mono', monospace",
+        background: "hsl(var(--game-accent))",
+        color: "hsl(0 0% 8%)",
+        borderRadius: 2,
+        boxShadow: "var(--game-button-shadow)",
+      }}
+    >
+      {children}
+    </button>
   );
 }
