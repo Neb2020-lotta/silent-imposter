@@ -183,6 +183,11 @@ export default function Home() {
                 tag="Client Access"
                 onClick={() => setMode("join")}
               />
+              <ActionCard
+                title="Lokal spielen"
+                tag="Pass & Play · 1 Gerät"
+                onClick={() => navigate("/local")}
+              />
             </div>
           )}
 
