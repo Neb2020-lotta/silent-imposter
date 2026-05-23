@@ -19,8 +19,8 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				'poppins': ['Poppins', 'sans-serif'],
-				'game': ['Press Start 2P', 'cursive'],
+				'poppins': ['Rubik', 'sans-serif'],
+				'game': ['"Space Mono"', 'monospace'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
