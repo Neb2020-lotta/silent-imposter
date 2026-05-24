@@ -119,8 +119,94 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Rubik', sans-serif;
   }
 }
+
+@layer components {
+  .term-mono { font-family: 'Space Mono', monospace; }
+  .term-sans { font-family: 'Rubik', sans-serif; }
+
+  .term-tag {
+    @apply inline-block text-[10px] uppercase tracking-[0.3em];
+    font-family: 'Space Mono', monospace;
+    color: hsl(var(--game-secondary));
+  }
+
+  .term-label {
+    @apply block text-[10px] uppercase tracking-widest mb-1.5;
+    font-family: 'Space Mono', monospace;
+    color: hsl(var(--game-secondary));
+  }
+
+  .term-card {
+    background: hsl(var(--game-card-bg));
+    border: 1px solid hsl(var(--game-border));
+    border-radius: 2px;
+    transition: border-color 200ms ease, box-shadow 200ms ease;
+  }
+  .term-card-accent {
+    background: hsl(var(--game-card-bg));
+    border: 1px solid hsl(var(--game-accent));
+    border-radius: 2px;
+    box-shadow: 0 0 28px -8px hsla(var(--game-accent), 0.45);
+  }
+
+  .term-input {
+    background: hsl(var(--game-input-bg)) !important;
+    border: 1px solid hsl(var(--game-border)) !important;
+    color: hsl(var(--game-text)) !important;
+    border-radius: 2px !important;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+  }
+  .term-input:focus,
+  .term-input:focus-visible {
+    outline: none !important;
+    border-color: hsl(var(--game-accent)) !important;
+    box-shadow: 0 0 0 1px hsl(var(--game-accent)), 0 0 18px -4px hsla(var(--game-accent), 0.6) !important;
+  }
+
+  .term-btn {
+    @apply inline-flex items-center justify-center px-5 py-3 text-xs uppercase font-bold tracking-[0.2em] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed;
+    font-family: 'Space Mono', monospace;
+    border-radius: 2px;
+  }
+  .term-btn-primary {
+    background: hsl(var(--game-accent));
+    color: hsl(0 0% 8%);
+    box-shadow: var(--game-button-shadow);
+  }
+  .term-btn-primary:not(:disabled):hover {
+    box-shadow: 0 0 0 1px hsl(var(--game-accent)), 0 0 24px -2px hsla(var(--game-accent), 0.7);
+    transform: translateY(-1px);
+  }
+  .term-btn-ghost {
+    background: transparent;
+    color: hsl(var(--game-text));
+    border: 1px solid hsl(var(--game-border));
+  }
+  .term-btn-ghost:not(:disabled):hover {
+    border-color: hsl(var(--game-accent));
+    color: hsl(var(--game-accent));
+  }
+
+  .term-chip {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] uppercase tracking-widest;
+    font-family: 'Space Mono', monospace;
+    border: 1px solid hsl(var(--game-border));
+    border-radius: 2px;
+    color: hsl(var(--game-secondary));
+  }
+  .term-chip-accent {
+    border-color: hsl(var(--game-accent));
+    color: hsl(var(--game-accent));
+    background: hsla(var(--game-accent), 0.08);
+  }
+
+  .term-divider { height: 1px; background: hsl(var(--game-card-bg)); }
+}
+
+
 
 /* Game-specific animations and effects */
 @keyframes pulsateGlow {
