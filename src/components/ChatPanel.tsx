@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -15,7 +14,14 @@ interface Props {
   onHintSent?: () => void | Promise<void>;
 }
 
-export default function ChatPanel({ roomId, playerId, playerName, hintsRequired = 3, canSendHint = true, onHintSent }: Props) {
+export default function ChatPanel({
+  roomId,
+  playerId,
+  playerName,
+  hintsRequired = 3,
+  canSendHint = true,
+  onHintSent,
+}: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -67,27 +73,23 @@ export default function ChatPanel({ roomId, playerId, playerName, hintsRequired 
 
   return (
     <div
-      className="rounded-2xl p-4 flex flex-col h-96"
+      className="flex flex-col h-80 sm:h-96 p-4"
       style={{
-        background: "hsla(var(--game-input-bg), 0.5)",
-        border: "2px solid hsl(var(--game-border))",
+        background: "hsl(var(--game-input-bg))",
+        border: "1px solid hsl(var(--game-border))",
+        borderRadius: 2,
       }}
     >
-      <div className="flex justify-between items-center mb-2 text-xs">
-        <span className="opacity-70">Chat & Hinweise</span>
-        <span
-          className="font-bold px-2 py-1 rounded-md"
-          style={{
-            background: "hsla(var(--game-accent), 0.2)",
-            color: "hsl(var(--game-accent))",
-          }}
-        >
-          Deine Hinweise: {myHintCount}/{hintsRequired}
+      <div className="flex justify-between items-center mb-3">
+        <span className="term-tag">// transmissions</span>
+        <span className={myHintCount >= hintsRequired ? "term-chip term-chip-accent" : "term-chip"}>
+          Hints {myHintCount}/{hintsRequired}
         </span>
       </div>
+
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-2 pr-1 mb-3">
         {messages.length === 0 && (
-          <p className="text-center text-sm opacity-60 mt-4">Noch keine Nachrichten…</p>
+          <p className="term-tag block text-center mt-6 opacity-60">// stand by — waiting for signal</p>
         )}
         {messages.map((m) => {
           const mine = m.player_id === playerId;
@@ -95,7 +97,7 @@ export default function ChatPanel({ roomId, playerId, playerName, hintsRequired 
           const hint = m.kind === "hint";
           if (system) {
             return (
-              <div key={m.id} className="text-center text-xs opacity-70 italic">
+              <div key={m.id} className="term-tag block text-center opacity-60">
                 {m.content}
               </div>
             );
@@ -103,20 +105,23 @@ export default function ChatPanel({ roomId, playerId, playerName, hintsRequired 
           return (
             <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
               <div
-                className="max-w-[80%] rounded-2xl px-3 py-2 text-sm"
+                className="max-w-[85%] px-3 py-2 text-sm term-sans"
                 style={{
                   background: hint
-                    ? "hsla(var(--game-reveal), 0.25)"
+                    ? "hsla(var(--game-accent), 0.12)"
                     : mine
-                    ? "hsla(var(--game-accent), 0.3)"
-                    : "hsla(var(--game-card-bg), 0.8)",
-                  border: hint
-                    ? "2px solid hsl(var(--game-reveal))"
-                    : "1px solid hsl(var(--game-border))",
+                    ? "hsla(var(--game-accent), 0.18)"
+                    : "hsl(var(--game-card-bg))",
+                  border: `1px solid ${hint ? "hsl(var(--game-accent))" : "hsl(var(--game-border))"}`,
+                  borderRadius: 2,
+                  color: "hsl(var(--game-text))",
                 }}
               >
-                <div className="text-xs font-bold opacity-80 flex gap-2 items-center" style={{ color: hint ? "hsl(var(--game-reveal))" : "hsl(var(--game-accent))" }}>
-                  {hint && <span>💡 HINWEIS</span>}
+                <div
+                  className="text-[10px] uppercase tracking-[0.25em] mb-1 term-mono flex gap-2 items-center"
+                  style={{ color: hint ? "hsl(var(--game-accent))" : "hsl(var(--game-secondary))" }}
+                >
+                  {hint && <span>▶ hint</span>}
                   <span>{m.player_name}</span>
                 </div>
                 <div className="break-words">{m.content}</div>
@@ -125,30 +130,27 @@ export default function ChatPanel({ roomId, playerId, playerName, hintsRequired 
           );
         })}
       </div>
+
       <div className="flex gap-2">
         <Input
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send("chat")}
-          placeholder="Nachricht oder Hinweis…"
+          placeholder=">_ Nachricht..."
           maxLength={500}
-          style={{
-            background: "hsla(var(--game-input-bg), 0.7)",
-            border: "2px solid hsl(var(--game-border))",
-            color: "hsl(var(--game-text))",
-          }}
+          className="term-input term-mono text-sm"
         />
-        <Button onClick={() => send("chat")} style={{ background: "var(--gradient-button-primary)" }}>
+        <button onClick={() => send("chat")} className="term-btn term-btn-ghost shrink-0">
           Chat
-        </Button>
-        <Button
+        </button>
+        <button
           onClick={() => send("hint")}
           disabled={myHintCount >= hintsRequired || !canSendHint}
-          style={{ background: "var(--gradient-button-reveal)" }}
+          className="term-btn term-btn-primary shrink-0"
           title={!canSendHint ? "Du bist nicht dran" : ""}
         >
-          💡 Hinweis
-        </Button>
+          ▶ Hint
+        </button>
       </div>
     </div>
   );

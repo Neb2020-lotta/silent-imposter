@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { getClientId } from "@/lib/clientId";
@@ -23,7 +22,6 @@ export default function Room() {
   const [showWord, setShowWord] = useState(false);
   const clientId = getClientId();
 
-  // Load room by code
   useEffect(() => {
     if (!code) return;
     let cancelled = false;
@@ -46,7 +44,6 @@ export default function Room() {
     };
   }, [code, navigate]);
 
-  // Subscribe to room + players + messages
   useEffect(() => {
     if (!room) return;
     const loadPlayers = async () => {
@@ -58,10 +55,7 @@ export default function Room() {
       if (data) setPlayers(data);
     };
     const loadMessages = async () => {
-      const { data } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("room_id", room.id);
+      const { data } = await supabase.from("messages").select("*").eq("room_id", room.id);
       if (data) setMessages(data);
     };
     loadPlayers();
@@ -107,9 +101,10 @@ export default function Room() {
     return counts;
   }, [messages, players]);
 
-  const allHintsGiven = players.length > 0 && players.every((p) => (hintCounts[p.id] || 0) >= HINTS_REQUIRED);
+  const allHintsGiven =
+    players.length > 0 && players.every((p) => (hintCounts[p.id] || 0) >= HINTS_REQUIRED);
 
-  const pre_voteTally = useMemo(() => {
+  const voteTally = useMemo(() => {
     const t: Record<string, number> = {};
     for (const p of players) if (p.voted_for) t[p.voted_for] = (t[p.voted_for] || 0) + 1;
     return t;
@@ -118,10 +113,10 @@ export default function Room() {
   if (!room) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center font-poppins text-[color:hsl(var(--game-text))]"
-        style={{ background: "var(--gradient-game-bg)" }}
+        className="min-h-screen flex items-center justify-center term-mono"
+        style={{ background: "hsl(var(--game-bg-start))", color: "hsl(var(--game-secondary))" }}
       >
-        Lade Raum…
+        <span className="term-tag">// connecting to session...</span>
       </div>
     );
   }
@@ -140,7 +135,6 @@ export default function Room() {
     }
     const tips = [...word.typeHints].sort(() => Math.random() - 0.5);
 
-    // Clear old messages and votes
     await supabase.from("messages").delete().eq("room_id", room.id);
 
     for (let i = 0; i < players.length; i++) {
@@ -216,7 +210,8 @@ export default function Room() {
 
   const starter = players.find((p) => p.id === room.starting_player_id);
   const currentTurnPlayer = players.find((p) => p.id === room.current_turn_player_id);
-  const isMyTurn = !!me && room.current_turn_player_id === me.id && (hintCounts[me.id] || 0) < HINTS_REQUIRED;
+  const isMyTurn =
+    !!me && room.current_turn_player_id === me.id && (hintCounts[me.id] || 0) < HINTS_REQUIRED;
 
   const advanceTurn = async () => {
     if (!me) return;
@@ -233,8 +228,6 @@ export default function Room() {
     await supabase.from("rooms").update({ current_turn_player_id: next }).eq("id", room.id);
   };
 
-  // Vote tallies (must stay above any early return to keep hook order stable)
-  const voteTally = pre_voteTally;
   const votedCount = players.filter((p) => p.voted_for).length;
   const allVoted = players.length > 0 && votedCount === players.length;
 
@@ -253,177 +246,210 @@ export default function Room() {
 
   return (
     <div
-      className="min-h-screen font-poppins text-[color:hsl(var(--game-text))]"
-      style={{ background: "var(--gradient-game-bg)" }}
+      className="min-h-screen w-full flex flex-col"
+      style={{ background: "hsl(var(--game-bg-start))", color: "hsl(var(--game-text))" }}
     >
-      <div className="relative z-10 flex flex-col items-center min-h-screen p-4 py-8">
-        <div className="w-full max-w-2xl flex items-center justify-between mb-6">
-          <div>
-            <div className="text-xs opacity-70">Raum-Code</div>
-            <div
-              className="text-3xl font-bold tracking-widest cursor-pointer"
-              style={{ color: "hsl(var(--game-accent))" }}
-              onClick={() => {
-                navigator.clipboard.writeText(room.code);
-                toast.success("Code kopiert!");
-              }}
-              title="Klicken zum Kopieren"
-            >
-              {room.code}
-            </div>
-          </div>
-          <Button variant="ghost" onClick={leaveRoom}>
-            Verlassen
-          </Button>
+      {/* HEADER */}
+      <header
+        className="flex items-center justify-between px-4 sm:px-6 py-4 border-b"
+        style={{ borderColor: "hsl(var(--game-card-bg))" }}
+      >
+        <div>
+          <p className="term-tag">// session</p>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(room.code);
+              toast.success("Code kopiert");
+            }}
+            className="term-mono text-2xl sm:text-3xl font-bold tracking-[0.3em] hover:opacity-80 transition-opacity"
+            style={{ color: "hsl(var(--game-accent))" }}
+            title="Klicken zum Kopieren"
+          >
+            {room.code}
+          </button>
         </div>
+        <div className="flex items-center gap-3">
+          <span className="term-chip hidden sm:inline-flex">{room.state}</span>
+          <button onClick={leaveRoom} className="term-btn term-btn-ghost text-[10px] px-3 py-2">
+            ← Exit
+          </button>
+        </div>
+      </header>
 
-        <div className="w-full max-w-2xl space-y-4">
+      <main className="flex-1 px-4 sm:px-6 py-6 sm:py-10">
+        <div className="w-full max-w-2xl mx-auto space-y-6">
           {/* LOBBY */}
           {room.state === "lobby" && (
-            <div
-              className="rounded-3xl p-6 backdrop-blur-md"
-              style={{
-                background: "hsla(var(--game-card-bg), 0.8)",
-                border: "2px solid hsl(var(--game-border))",
-                boxShadow: "var(--game-card-shadow)",
-              }}
-            >
-              <h2 className="text-2xl font-bold text-center mb-4">
-                Lobby <span className="opacity-60 text-base">({players.length})</span>
-              </h2>
-              <div className="grid grid-cols-2 gap-2 mb-4">
+            <section className="term-card p-5 sm:p-7 space-y-5">
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="term-tag">// lobby</p>
+                  <h2 className="text-xl term-sans font-medium mt-1">
+                    Spieler verbunden
+                    <span style={{ color: "hsl(var(--game-secondary))" }}> · {players.length}</span>
+                  </h2>
+                </div>
+                <span className="term-chip">{room.category}</span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {players.map((p) => (
                   <div
                     key={p.id}
-                    className="rounded-xl px-3 py-2 text-center"
+                    className="px-3 py-2.5 term-sans text-sm flex items-center gap-2"
                     style={{
-                      background: "hsla(var(--game-input-bg), 0.6)",
+                      background: "hsl(var(--game-input-bg))",
                       border: "1px solid hsl(var(--game-border))",
+                      borderRadius: 2,
                     }}
                   >
-                    {p.is_host && "👑 "}
-                    {p.name}
-                    {p.client_id === clientId && " (Du)"}
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{
+                        background: p.is_host
+                          ? "hsl(var(--game-accent))"
+                          : "hsl(var(--game-secondary))",
+                      }}
+                    />
+                    <span className="truncate">
+                      {p.name}
+                      {p.client_id === clientId && (
+                        <span style={{ color: "hsl(var(--game-secondary))" }}> · du</span>
+                      )}
+                    </span>
                   </div>
                 ))}
               </div>
-              <p className="text-center text-sm opacity-70 mb-4">
-                Thema: <strong>{room.category}</strong> · Imposter: <strong>{room.imposter_count}</strong>
-              </p>
+
+              <div className="term-divider" />
+
+              <div className="flex flex-wrap gap-2 text-xs term-mono" style={{ color: "hsl(var(--game-secondary))" }}>
+                <span className="term-chip">imposter: {room.imposter_count}</span>
+                <span className="term-chip">hints: {HINTS_REQUIRED}</span>
+              </div>
+
               {isHost ? (
-                <Button
+                <button
                   onClick={startGame}
                   disabled={players.length < 3}
-                  className="w-full text-lg py-4"
-                  style={{ background: "var(--gradient-button-primary)" }}
+                  className="term-btn term-btn-primary w-full py-4"
                 >
                   {players.length < 3
-                    ? `Warte auf Spieler (${players.length}/3)`
-                    : "Spiel starten"}
-                </Button>
+                    ? `▶ Warte (${players.length}/3)`
+                    : "▶ Spiel starten"}
+                </button>
               ) : (
-                <p className="text-center opacity-70">Warte, bis der Host startet…</p>
+                <p className="term-tag text-center block">// warte auf host...</p>
               )}
-            </div>
+            </section>
           )}
 
-          {/* PLAYING - personal word reveal */}
+          {/* PLAYING */}
           {room.state === "playing" && me && (
-            <div
-              className="rounded-3xl p-8 backdrop-blur-md text-center space-y-6"
-              style={{
-                background: "hsla(var(--game-card-bg), 0.8)",
-                border: "2px solid hsl(var(--game-border))",
-                boxShadow: "var(--game-card-shadow)",
-              }}
-            >
-              <h2 className="text-2xl font-bold">Hi {me.name}!</h2>
+            <section className="term-card p-6 sm:p-8 text-center space-y-6">
+              <div>
+                <p className="term-tag">// identity briefing</p>
+                <h2 className="text-2xl term-sans font-medium mt-2">Hi {me.name}</h2>
+              </div>
+
               {!showWord ? (
                 <>
-                  <p className="opacity-80">Bereit, dein Wort zu sehen?</p>
-                  <Button
+                  <p className="term-sans text-sm" style={{ color: "hsl(var(--game-secondary))" }}>
+                    Stelle sicher, dass niemand mitliest.
+                  </p>
+                  <button
                     onClick={() => setShowWord(true)}
-                    className="w-full text-lg py-4"
-                    style={{ background: "var(--gradient-button-primary)" }}
+                    className="term-btn term-btn-primary w-full py-4"
                   >
-                    🙈 Wort anzeigen
-                  </Button>
+                    ▶ Karte aufdecken
+                  </button>
                 </>
-              ) : me.is_imposter ? (
-                <div className="space-y-3">
-                  <p className="text-xl">
-                    Du bist der{" "}
-                    <span className="font-bold text-2xl" style={{ color: "hsl(var(--game-imposter))" }}>
-                      IMPOSTER
-                    </span>
-                    !
-                  </p>
-                  <p>
-                    Dein Tipp:{" "}
-                    <em style={{ color: "hsl(var(--game-reveal))" }}>"{me.imposter_tip}"</em>
-                  </p>
-                </div>
               ) : (
-                <div className="space-y-2">
-                  <p>Dein Wort ist:</p>
-                  <h3 className="text-4xl font-bold" style={{ color: "hsl(var(--game-accent))" }}>
-                    {me.word}
-                  </h3>
-                </div>
-              )}
-              {showWord && (
-                <Button onClick={() => setShowWord(false)} variant="outline" className="w-full">
-                  Verbergen
-                </Button>
-              )}
-              {isHost && (
-                <Button
-                  onClick={goDiscussion}
-                  className="w-full text-lg py-4"
-                  style={{ background: "var(--gradient-button-success)" }}
+                <div
+                  className="p-6 space-y-3"
+                  style={{
+                    background: "hsl(var(--game-input-bg))",
+                    border: "1px solid hsl(var(--game-accent))",
+                    borderRadius: 2,
+                  }}
                 >
-                  Alle bereit → Diskussion
-                </Button>
-              )}
-              {!isHost && (
-                <p className="text-sm opacity-60">Der Host startet die Diskussion sobald alle bereit sind.</p>
-              )}
-            </div>
-          )}
-
-          {/* DISCUSSION - chat + hints */}
-          {room.state === "discussion" && (
-            <div
-              className="rounded-3xl p-6 backdrop-blur-md space-y-4"
-              style={{
-                background: "hsla(var(--game-card-bg), 0.8)",
-                border: "2px solid hsl(var(--game-border))",
-                boxShadow: "var(--game-card-shadow)",
-              }}
-            >
-              <h2 className="text-2xl font-bold text-center" style={{ color: "hsl(var(--game-accent))" }}>
-                🔍 Diskussion
-              </h2>
-              {currentTurnPlayer ? (
-                <div className="text-center p-3 rounded-xl" style={{ background: "hsla(var(--game-accent), 0.15)" }}>
-                  {isMyTurn ? (
+                  {me.is_imposter ? (
                     <>
-                      <strong style={{ color: "hsl(var(--game-accent))" }}>Du bist dran!</strong> Gib einen Hinweis.
+                      <p className="term-tag">// du bist</p>
+                      <p
+                        className="text-4xl font-bold uppercase term-mono"
+                        style={{ color: "hsl(var(--game-accent))" }}
+                      >
+                        Imposter
+                      </p>
+                      <p className="term-sans text-sm pt-2">
+                        Tipp:{" "}
+                        <em style={{ color: "hsl(var(--game-accent))" }}>"{me.imposter_tip}"</em>
+                      </p>
                     </>
                   ) : (
                     <>
-                      <strong style={{ color: "hsl(var(--game-accent))" }}>{currentTurnPlayer.name}</strong> ist dran mit einem Hinweis.
+                      <p className="term-tag">// dein wort</p>
+                      <p
+                        className="text-4xl font-bold term-mono"
+                        style={{ color: "hsl(var(--game-accent))" }}
+                      >
+                        {me.word}
+                      </p>
                     </>
                   )}
                 </div>
-              ) : starter ? (
-                <div className="text-center p-3 rounded-xl" style={{ background: "hsla(var(--game-reveal), 0.15)" }}>
-                  Alle Hinweise gegeben – ab zur Abstimmung!
-                </div>
-              ) : null}
+              )}
 
-              {/* Hint progress per player */}
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              {showWord && (
+                <button
+                  onClick={() => setShowWord(false)}
+                  className="term-btn term-btn-ghost w-full"
+                >
+                  Verbergen
+                </button>
+              )}
+
+              {isHost ? (
+                <button onClick={goDiscussion} className="term-btn term-btn-primary w-full py-4">
+                  ▶ Diskussion starten
+                </button>
+              ) : (
+                <p className="term-tag block">// host startet diskussion sobald alle bereit</p>
+              )}
+            </section>
+          )}
+
+          {/* DISCUSSION */}
+          {room.state === "discussion" && (
+            <section className="term-card p-5 sm:p-6 space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="term-tag">// channel</p>
+                  <h2 className="text-xl term-sans font-medium mt-1">Diskussion</h2>
+                </div>
+                {currentTurnPlayer && (
+                  <span className="term-chip term-chip-accent">
+                    {isMyTurn ? "▶ du bist dran" : `▶ ${currentTurnPlayer.name}`}
+                  </span>
+                )}
+              </div>
+
+              {!currentTurnPlayer && starter && (
+                <div
+                  className="px-4 py-3 text-sm term-sans"
+                  style={{
+                    background: "hsla(var(--game-accent), 0.1)",
+                    border: "1px solid hsl(var(--game-accent))",
+                    borderRadius: 2,
+                    color: "hsl(var(--game-accent))",
+                  }}
+                >
+                  Alle Hinweise gegeben — bereit zur Abstimmung.
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-2">
                 {players.map((p) => {
                   const c = hintCounts[p.id] || 0;
                   const done = c >= HINTS_REQUIRED;
@@ -431,18 +457,26 @@ export default function Room() {
                   return (
                     <div
                       key={p.id}
-                      className="rounded-lg px-2 py-1 flex justify-between items-center"
+                      className="px-3 py-2 flex justify-between items-center text-sm term-sans"
                       style={{
-                        background: done
-                          ? "hsla(var(--game-reveal), 0.2)"
-                          : turn
-                          ? "hsla(var(--game-accent), 0.25)"
-                          : "hsla(var(--game-input-bg), 0.6)",
-                        border: `1px solid ${done ? "hsl(var(--game-reveal))" : turn ? "hsl(var(--game-accent))" : "hsl(var(--game-border))"}`,
+                        background: turn
+                          ? "hsla(var(--game-accent), 0.12)"
+                          : "hsl(var(--game-input-bg))",
+                        border: `1px solid ${turn ? "hsl(var(--game-accent))" : "hsl(var(--game-border))"}`,
+                        borderRadius: 2,
+                        opacity: done ? 0.55 : 1,
                       }}
                     >
-                      <span>{done ? "✅ " : turn ? "🎤 " : ""}{p.name}</span>
-                      <span className="font-bold">{c}/{HINTS_REQUIRED}</span>
+                      <span className="truncate">
+                        {turn && "▶ "}
+                        {p.name}
+                      </span>
+                      <span
+                        className="term-mono text-xs"
+                        style={{ color: done ? "hsl(var(--game-accent))" : "hsl(var(--game-secondary))" }}
+                      >
+                        {c}/{HINTS_REQUIRED}
+                      </span>
                     </div>
                   );
                 })}
@@ -459,217 +493,195 @@ export default function Room() {
                 />
               )}
 
-              {isHost && (
-                <Button
+              {isHost ? (
+                <button
                   onClick={goVoting}
                   disabled={!allHintsGiven}
-                  className="w-full text-lg py-4"
-                  style={{ background: "var(--gradient-button-reveal)" }}
+                  className="term-btn term-btn-primary w-full py-4"
                 >
-                  {allHintsGiven ? "🗳️ Zur Abstimmung" : "Warte auf alle 3 Hinweise…"}
-                </Button>
-              )}
-              {!isHost && (
-                <p className="text-center text-sm opacity-60">
-                  {allHintsGiven
-                    ? "Alle bereit – Host startet die Abstimmung."
-                    : `Jeder muss ${HINTS_REQUIRED} Hinweise geben.`}
+                  {allHintsGiven ? "▶ Zur Abstimmung" : `Warte auf ${HINTS_REQUIRED} Hinweise pro Spieler`}
+                </button>
+              ) : (
+                <p className="term-tag text-center block">
+                  // {allHintsGiven ? "host startet abstimmung" : `noch hinweise sammeln`}
                 </p>
               )}
-            </div>
+            </section>
           )}
 
           {/* VOTING */}
           {room.state === "voting" && me && (
-            <div
-              className="rounded-3xl p-6 backdrop-blur-md space-y-4"
-              style={{
-                background: "hsla(var(--game-card-bg), 0.8)",
-                border: "2px solid hsl(var(--game-border))",
-                boxShadow: "var(--game-card-shadow)",
-              }}
-            >
-              <h2 className="text-2xl font-bold text-center" style={{ color: "hsl(var(--game-imposter))" }}>
-                🗳️ Wer ist der Imposter?
-              </h2>
-              <p className="text-center text-sm opacity-70">
-                {votedCount}/{players.length} haben abgestimmt
-              </p>
+            <section className="term-card p-5 sm:p-7 space-y-5">
+              <div>
+                <p className="term-tag">// vote</p>
+                <h2 className="text-xl term-sans font-medium mt-1">Wer ist der Imposter?</h2>
+                <p className="term-tag block mt-1">
+                  // {votedCount}/{players.length} abgestimmt
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {players.map((p) => {
                   const isMe = p.client_id === clientId;
                   const selected = me.voted_for === p.id;
                   return (
-                    <Button
+                    <button
                       key={p.id}
                       onClick={() => !isMe && castVote(p.id)}
                       disabled={isMe}
-                      className="py-4 text-base"
+                      className="px-4 py-3 text-left term-sans text-sm transition-all disabled:opacity-40"
                       style={{
                         background: selected
-                          ? "var(--gradient-button-reveal)"
-                          : "hsla(var(--game-input-bg), 0.7)",
-                        border: `2px solid ${selected ? "hsl(var(--game-reveal))" : "hsl(var(--game-border))"}`,
+                          ? "hsla(var(--game-accent), 0.18)"
+                          : "hsl(var(--game-input-bg))",
+                        border: `1px solid ${selected ? "hsl(var(--game-accent))" : "hsl(var(--game-border))"}`,
+                        borderRadius: 2,
                         color: "hsl(var(--game-text))",
-                        opacity: isMe ? 0.5 : 1,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isMe && !selected)
+                          e.currentTarget.style.borderColor = "hsl(var(--game-accent))";
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isMe && !selected)
+                          e.currentTarget.style.borderColor = "hsl(var(--game-border))";
                       }}
                     >
-                      {selected && "✅ "}{p.name}{isMe && " (Du)"}
-                    </Button>
+                      {selected && "▶ "}
+                      {p.name}
+                      {isMe && (
+                        <span style={{ color: "hsl(var(--game-secondary))" }}> · du</span>
+                      )}
+                    </button>
                   );
                 })}
               </div>
+
               {me.voted_for && (
-                <p className="text-center text-sm" style={{ color: "hsl(var(--game-reveal))" }}>
-                  Deine Stimme wurde abgegeben. Du kannst sie noch ändern.
+                <p className="term-tag block text-center" style={{ color: "hsl(var(--game-accent))" }}>
+                  // stimme gespeichert · änderbar
                 </p>
               )}
-              {isHost && (
-                <Button
+
+              {isHost ? (
+                <button
                   onClick={goElimination}
                   disabled={votedCount === 0}
-                  className="w-full text-lg py-4"
-                  style={{ background: "var(--gradient-button-reveal)" }}
+                  className="term-btn term-btn-primary w-full py-4"
                 >
-                  {allVoted ? "👉 Spieler rauswählen" : `Spieler rauswählen (${votedCount}/${players.length})`}
-                </Button>
+                  ▶ Spieler rauswählen ({votedCount}/{players.length})
+                </button>
+              ) : (
+                allVoted && <p className="term-tag block text-center">// warte auf host</p>
               )}
-              {!isHost && allVoted && (
-                <p className="text-center text-sm opacity-70">Warte auf Host…</p>
-              )}
-            </div>
+            </section>
           )}
 
           {/* ELIMINATION */}
           {room.state === "elimination" && eliminatedPlayer && (
-            <div
-              className="rounded-3xl p-8 backdrop-blur-md text-center space-y-4"
-              style={{
-                background: "hsla(var(--game-card-bg), 0.8)",
-                border: "2px solid hsl(var(--game-imposter))",
-                boxShadow: "var(--game-card-shadow)",
-              }}
-            >
-              <h2 className="text-2xl font-bold" style={{ color: "hsl(var(--game-imposter))" }}>
-                👉 Rausgewählt
-              </h2>
-              <p className="opacity-80">Die Mehrheit hat entschieden:</p>
-              <div
-                className="mx-auto inline-block px-6 py-4 rounded-2xl"
-                style={{
-                  background: "hsla(var(--game-imposter), 0.2)",
-                  border: "2px solid hsl(var(--game-imposter))",
-                }}
+            <section className="term-card-accent p-6 sm:p-8 text-center space-y-5">
+              <p className="term-tag">// verdict</p>
+              <p
+                className="text-3xl sm:text-4xl term-mono font-bold uppercase tracking-wider"
+                style={{ color: "hsl(var(--game-accent))" }}
               >
-                <div className="text-3xl font-bold" style={{ color: "hsl(var(--game-imposter))" }}>
-                  {eliminatedPlayer.name}
-                </div>
-                <div className="text-sm opacity-70 mt-1">
-                  {voteTally[eliminatedPlayer.id] || 0} Stimme{(voteTally[eliminatedPlayer.id] || 0) === 1 ? "" : "n"}
-                </div>
-              </div>
-              <p className="opacity-70 italic">War es wirklich der Imposter?</p>
+                {eliminatedPlayer.name}
+              </p>
+              <p className="term-tag block">
+                // {voteTally[eliminatedPlayer.id] || 0} stimme
+                {(voteTally[eliminatedPlayer.id] || 0) === 1 ? "" : "n"}
+              </p>
+              <p className="term-sans text-sm" style={{ color: "hsl(var(--game-secondary))" }}>
+                War es wirklich der Imposter?
+              </p>
               {isHost ? (
-                <Button
-                  onClick={goReveal}
-                  className="w-full text-lg py-4"
-                  style={{ background: "var(--gradient-button-reveal)" }}
-                >
-                  🔍 Jetzt auflösen!
-                </Button>
+                <button onClick={goReveal} className="term-btn term-btn-primary w-full py-4">
+                  ▶ Auflösen
+                </button>
               ) : (
-                <p className="text-sm opacity-60">Warte auf Host für die Auflösung…</p>
+                <p className="term-tag block">// warte auf host</p>
               )}
-            </div>
+            </section>
           )}
 
           {/* REVEAL */}
           {room.state === "reveal" && (
-            <div
-              className="rounded-3xl p-8 backdrop-blur-md text-center space-y-4"
-              style={{
-                background: "hsla(var(--game-card-bg), 0.8)",
-                border: "2px solid hsl(var(--game-border))",
-                boxShadow: "var(--game-card-shadow)",
-              }}
-            >
-              <h2 className="text-2xl font-bold" style={{ color: "hsl(var(--game-accent))" }}>
-                🔍 Auflösung
-              </h2>
-              <p>
-                Das Wort war:{" "}
-                <strong className="text-2xl" style={{ color: "hsl(var(--game-accent))" }}>
-                  {room.word}
-                </strong>
-              </p>
-              <p>
-                Hinweis war: <em style={{ color: "hsl(var(--game-reveal))" }}>"{room.hint}"</em>
-              </p>
+            <section className="term-card p-5 sm:p-7 space-y-5">
+              <p className="term-tag">// auflösung</p>
 
-              <div className="pt-2">
-                <p className="mb-2 font-bold">🗳️ Abstimmungs-Ergebnis</p>
-                <div className="space-y-1 text-left max-w-sm mx-auto">
-                  {players
-                    .slice()
-                    .sort((a, b) => (voteTally[b.id] || 0) - (voteTally[a.id] || 0))
-                    .map((p) => {
-                      const votes = voteTally[p.id] || 0;
-                      return (
-                        <div
-                          key={p.id}
-                          className="flex justify-between items-center rounded-lg px-3 py-2"
-                          style={{
-                            background: p.is_imposter
-                              ? "hsla(var(--game-imposter), 0.2)"
-                              : "hsla(var(--game-input-bg), 0.6)",
-                            border: `1px solid ${p.is_imposter ? "hsl(var(--game-imposter))" : "hsl(var(--game-border))"}`,
-                          }}
-                        >
-                          <span>
-                            {p.is_imposter && "🎭 "}
-                            {p.name}
-                          </span>
-                          <span className="font-bold">{votes} Stimme{votes === 1 ? "" : "n"}</span>
-                        </div>
-                      );
-                    })}
-                </div>
+              <div
+                className="p-5 text-center space-y-2"
+                style={{
+                  background: "hsl(var(--game-input-bg))",
+                  border: "1px solid hsl(var(--game-accent))",
+                  borderRadius: 2,
+                }}
+              >
+                <p className="term-tag">// das wort war</p>
+                <p
+                  className="text-3xl term-mono font-bold"
+                  style={{ color: "hsl(var(--game-accent))" }}
+                >
+                  {room.word}
+                </p>
+                <p className="term-sans text-sm" style={{ color: "hsl(var(--game-secondary))" }}>
+                  Hinweis: <em>"{room.hint}"</em>
+                </p>
               </div>
 
-              <div className="pt-2">
-                <p className="mb-2">Imposter waren:</p>
-                <div className="flex flex-wrap gap-2 justify-center">
+              <div className="space-y-2">
+                <p className="term-tag">// abstimmungs-log</p>
+                {players
+                  .slice()
+                  .sort((a, b) => (voteTally[b.id] || 0) - (voteTally[a.id] || 0))
+                  .map((p) => {
+                    const votes = voteTally[p.id] || 0;
+                    return (
+                      <div
+                        key={p.id}
+                        className="flex justify-between items-center px-3 py-2 text-sm term-sans"
+                        style={{
+                          background: p.is_imposter
+                            ? "hsla(var(--game-accent), 0.12)"
+                            : "hsl(var(--game-input-bg))",
+                          border: `1px solid ${p.is_imposter ? "hsl(var(--game-accent))" : "hsl(var(--game-border))"}`,
+                          borderRadius: 2,
+                        }}
+                      >
+                        <span style={{ color: p.is_imposter ? "hsl(var(--game-accent))" : "hsl(var(--game-text))" }}>
+                          {p.is_imposter && "▶ "}
+                          {p.name}
+                        </span>
+                        <span className="term-mono text-xs" style={{ color: "hsl(var(--game-secondary))" }}>
+                          {votes} stimme{votes === 1 ? "" : "n"}
+                        </span>
+                      </div>
+                    );
+                  })}
+              </div>
+
+              <div className="space-y-2">
+                <p className="term-tag">// imposter waren</p>
+                <div className="flex flex-wrap gap-2">
                   {players
                     .filter((p) => p.is_imposter)
                     .map((p) => (
-                      <span
-                        key={p.id}
-                        className="px-4 py-2 rounded-xl font-bold"
-                        style={{
-                          background: "hsla(var(--game-imposter), 0.2)",
-                          border: "2px solid hsl(var(--game-imposter))",
-                          color: "hsl(var(--game-imposter))",
-                        }}
-                      >
-                        🎭 {p.name}
+                      <span key={p.id} className="term-chip term-chip-accent">
+                        ▶ {p.name}
                       </span>
                     ))}
                 </div>
               </div>
 
               {isHost && (
-                <Button
-                  onClick={newRound}
-                  className="w-full text-lg py-4"
-                  style={{ background: "var(--gradient-button-success)" }}
-                >
-                  🔄 Neue Runde
-                </Button>
+                <button onClick={newRound} className="term-btn term-btn-primary w-full py-4">
+                  ▶ Neue Runde
+                </button>
               )}
-            </div>
+            </section>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }
