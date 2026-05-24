@@ -380,7 +380,7 @@ export const wordCategories: Record<string, WordData[]> = {
     { word: "Mikrowelle", hint: "erhitzt Wasser in Lebensmitteln", typeHints: ["Strahlung", "Küche", "schnell", "rotiert"] },
   ],
 
-  Fantasie & Mythos: [
+  "Fantasie & Mythos": [
     { word: "Drache", hint: "feuerspeiend und geflügelt", typeHints: ["Schuppen", "Schatz", "mittelalterlich", "Feuer"] },
     { word: "Einhorn", hint: "Pferd mit Horn", typeHints: ["Horn", "magisch", "Regenbogen", "Märchen"] },
     { word: "Vampire", hint: "saugen Blut in der Nacht", typeHints: ["Knoblauch", "Sarg", "Unsterblich", "Cape"] },
@@ -467,7 +467,7 @@ export const wordCategories: Record<string, WordData[]> = {
     { word: "Cyberpunk 2077", hint: "Neon-Stadt der Zukunft", typeHints: ["Neon", "Hacking", "Implantate", "Zukunft"] },
   ],
 
-  Mode & Stil: [
+  "Mode & Stil": [
     { word: "Sneaker", hint: "Sportschuhe als Statussymbol", typeHints: ["Nike", "Sammler", "Sohle", "hype"] },
     { word: "Hoodie", hint: "bequemer Kapuzenpullover", typeHints: ["Kapuze", "warm", "lässig", "Taschen"] },
     { word: "Jeans", hint: "aus blauem Denim", typeHints: ["blau", "Denim", "Nieten", "zeitlos"] },
