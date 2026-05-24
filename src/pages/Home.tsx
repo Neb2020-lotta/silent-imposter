@@ -52,7 +52,7 @@ export default function Home() {
       });
       if (pErr) {
         console.error("Player insert failed:", pErr);
-        toast.error("Beitritt fehlgeschlagen: " + pErr.message);
+        toast.error("Beitritt fehlgeschlagen. Bitte versuche es erneut.");
         setBusy(false);
         return;
       }
