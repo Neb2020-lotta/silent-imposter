@@ -437,20 +437,9 @@ wordCategories["Alle Wörter"] = Object.entries(wordCategories)
   .filter(([k]) => k !== "Alle Wörter")
   .flatMap(([, v]) => v);
 
-export type Difficulty = "easy" | "normal" | "hard";
-
-function classify(w: WordData): Difficulty {
-  const len = w.word.replace(/[\s-]/g, "").length;
-  if (len <= 6) return "easy";
-  if (len >= 11 || /[\s-]/.test(w.word)) return "hard";
-  return "normal";
-}
-
-export function pickRandomWord(category: string, difficulty?: Difficulty): WordData {
-  const base = wordCategories[category] ?? wordCategories.Allgemein;
-  const list = difficulty ? base.filter((w) => classify(w) === difficulty) : base;
-  const pool = list.length ? list : base;
-  return pool[Math.floor(Math.random() * pool.length)];
+export function pickRandomWord(category: string): WordData {
+  const list = wordCategories[category] ?? wordCategories.Allgemein;
+  return list[Math.floor(Math.random() * list.length)];
 }
 
 export function generateRoomCode(): string {

@@ -3,10 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { getClientId } from "@/lib/clientId";
-import { pickRandomWord, type Difficulty } from "@/lib/words";
+import { pickRandomWord } from "@/lib/words";
 import ChatPanel from "@/components/ChatPanel";
-import Countdown from "@/components/Countdown";
-import { fireConfetti } from "@/lib/confetti";
 import { toast } from "sonner";
 
 type Room = Tables<"rooms">;
@@ -94,14 +92,6 @@ export default function Room() {
     if (room?.state === "lobby") setShowWord(false);
   }, [room?.state]);
 
-  // Confetti when imposter is correctly revealed
-  useEffect(() => {
-    if (room?.state !== "reveal") return;
-    const elim = players.find((p) => p.id === room.eliminated_player_id);
-    if (elim?.is_imposter) fireConfetti();
-  }, [room?.state, room?.eliminated_player_id, players]);
-
-
   const hintCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const p of players) counts[p.id] = 0;
@@ -136,9 +126,7 @@ export default function Room() {
 
   const startGame = async () => {
     if (players.length < 3) return toast.error("Mindestens 3 Spieler nötig");
-    let diff: Difficulty | undefined;
-    try { diff = (sessionStorage.getItem(`room_diff_${room.code}`) as Difficulty | null) ?? undefined; } catch { /* ignore */ }
-    const word = pickRandomWord(room.category, diff);
+    const word = pickRandomWord(room.category);
     const maxImp = Math.max(1, Math.min(room.imposter_count, Math.floor(players.length / 2)));
     const indices = [...players.keys()];
     const imposterIdx: number[] = [];
@@ -446,10 +434,6 @@ export default function Room() {
                   </span>
                 )}
               </div>
-
-              <Countdown seconds={180} resetKey={room.id} onComplete={() => { /* visual only */ }} />
-
-
 
               {!currentTurnPlayer && starter && (
                 <div
