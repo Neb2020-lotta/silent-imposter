@@ -128,7 +128,9 @@ export default function Room() {
 
   const startGame = async () => {
     if (players.length < 3) return toast.error("Mindestens 3 Spieler nötig");
-    const word = pickRandomWord(room.category);
+    let diff: Difficulty | undefined;
+    try { diff = (sessionStorage.getItem(`room_diff_${room.code}`) as Difficulty | null) ?? undefined; } catch { /* ignore */ }
+    const word = pickRandomWord(room.category, diff);
     const maxImp = Math.max(1, Math.min(room.imposter_count, Math.floor(players.length / 2)));
     const indices = [...players.keys()];
     const imposterIdx: number[] = [];
