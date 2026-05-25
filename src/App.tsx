@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Room from "./pages/Room";
 import Local from "./pages/Local";
+import Instructions from "./pages/Instructions";
+import AIMode from "./pages/AIMode";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
