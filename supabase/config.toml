@@ -1,1 +1,4 @@
 project_id = "wpegwanzbpdiumigntkx"
+
+[functions.ai-imposter]
+verify_jwt = false
