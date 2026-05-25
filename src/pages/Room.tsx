@@ -439,6 +439,10 @@ export default function Room() {
                 )}
               </div>
 
+              <Countdown seconds={180} resetKey={room.id} onComplete={() => { /* visual only */ }} />
+
+
+
               {!currentTurnPlayer && starter && (
                 <div
                   className="px-4 py-3 text-sm term-sans"
