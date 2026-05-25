@@ -3,8 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { getClientId } from "@/lib/clientId";
-import { pickRandomWord } from "@/lib/words";
+import { pickRandomWord, type Difficulty } from "@/lib/words";
 import ChatPanel from "@/components/ChatPanel";
+import Countdown from "@/components/Countdown";
+import { fireConfetti } from "@/lib/confetti";
 import { toast } from "sonner";
 
 type Room = Tables<"rooms">;
