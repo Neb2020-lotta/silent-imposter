@@ -94,6 +94,14 @@ export default function Room() {
     if (room?.state === "lobby") setShowWord(false);
   }, [room?.state]);
 
+  // Confetti when imposter is correctly revealed
+  useEffect(() => {
+    if (room?.state !== "reveal") return;
+    const elim = players.find((p) => p.id === room.eliminated_player_id);
+    if (elim?.is_imposter) fireConfetti();
+  }, [room?.state, room?.eliminated_player_id, players]);
+
+
   const hintCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const p of players) counts[p.id] = 0;
