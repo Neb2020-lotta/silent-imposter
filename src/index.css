@@ -237,3 +237,11 @@ All colors MUST be HSL.
   animation: shine 6s infinite linear;
   z-index: -1;
 }
+
+/* Press pulse for primary buttons */
+.btn-press:active { animation: press-pulse 0.45s ease-out; }
+.btn-press { transition: transform 120ms ease, box-shadow 200ms ease; }
+.btn-press:hover { transform: translateY(-1px); }
+
+/* Page transition */
+.page-enter { animation: fade-in 0.35s ease-out both; }
