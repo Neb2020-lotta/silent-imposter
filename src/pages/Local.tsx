@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { wordCategories, pickRandomWord } from "@/lib/words";
 import { toast } from "sonner";
+import { sfx } from "@/lib/sounds";
 
 type Phase = "setup" | "reveal" | "discussion" | "voting" | "result";
 
@@ -77,10 +78,12 @@ export default function Local() {
     setRevealIdx(0);
     setShowCard(false);
     setPhase("reveal");
+    sfx.roundStart();
   };
 
   const nextReveal = () => {
     setShowCard(false);
+    sfx.click();
     if (revealIdx + 1 >= players.length) {
       setPhase("discussion");
     } else {
@@ -122,10 +125,23 @@ export default function Local() {
     return top[Math.floor(Math.random() * top.length)];
   }, [tally, phase]);
 
+  // play dramatic sound when result reveals
+  if (phase === "result" && eliminated !== null && typeof window !== "undefined") {
+    // fire once per result render via microtask flag on window
+    const flag = `__si_result_${eliminated}_${players.length}`;
+    if (!(window as any)[flag]) {
+      (window as any)[flag] = true;
+      const wasImposter = players[eliminated]?.isImposter;
+      setTimeout(() => (wasImposter ? sfx.victory() : sfx.imposterReveal()), 50);
+      setTimeout(() => delete (window as any)[flag], 2000);
+    }
+  }
+
   const newRound = () => {
     setPhase("setup");
     setPlayers([]);
     setVotes([]);
+    sfx.click();
   };
 
   return (
@@ -260,11 +276,12 @@ export default function Local() {
               </p>
 
               {!showCard ? (
-                <Primary onClick={() => setShowCard(true)}>🙈 Karte aufdecken</Primary>
+                <Primary onClick={() => { sfx.cardReveal(); setShowCard(true); }}>🙈 Karte aufdecken</Primary>
               ) : (
                 <>
                   <div
-                    className="p-8 space-y-3"
+                    key={revealIdx}
+                    className={`p-8 space-y-3 animate-flip ${players[revealIdx].isImposter ? "animate-imposter-glow" : ""}`}
                     style={{
                       background: "hsl(var(--game-card-bg))",
                       border: "1px solid hsl(var(--game-border))",
@@ -404,10 +421,10 @@ export default function Local() {
 
           {/* RESULT */}
           {phase === "result" && (
-            <div className="space-y-6 text-center">
+            <div className="space-y-6 text-center animate-fade-in">
               <Tag>Auflösung</Tag>
               <div
-                className="p-6 space-y-2"
+                className={`p-6 space-y-2 ${eliminated !== null && players[eliminated]?.isImposter ? "animate-imposter-glow" : "animate-shake"}`}
                 style={{
                   background: "hsl(var(--game-card-bg))",
                   border: "1px solid hsl(var(--game-accent))",
@@ -521,7 +538,7 @@ function Primary({
   return (
     <button
       onClick={onClick}
-      className="w-full py-4 px-6 text-sm font-bold uppercase tracking-wider transition-all"
+      className="press-feedback w-full py-4 px-6 text-sm font-bold uppercase tracking-wider transition-all"
       style={{
         fontFamily: mono,
         background: "hsl(var(--game-accent))",

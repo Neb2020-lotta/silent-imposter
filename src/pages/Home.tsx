@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { wordCategories, generateRoomCode } from "@/lib/words";
 import { getClientId, getStoredName, setStoredName } from "@/lib/clientId";
 import { toast } from "sonner";
+import { Settings as Gear } from "lucide-react";
+import { sfx } from "@/lib/sounds";
 
 type Mode = "menu" | "host" | "join";
 
@@ -117,9 +119,25 @@ export default function Home() {
 
   return (
     <div
-      className="flex min-h-screen w-full flex-col md:flex-row"
+      className="flex min-h-screen w-full flex-col md:flex-row relative"
       style={{ background: "hsl(var(--game-bg-start))", color: "hsl(var(--game-text))" }}
     >
+      <button
+        onClick={() => {
+          sfx.click();
+          navigate("/settings");
+        }}
+        aria-label="Einstellungen"
+        className="press-feedback absolute top-4 right-4 z-20 h-10 w-10 flex items-center justify-center"
+        style={{
+          border: "1px solid hsl(var(--game-border))",
+          background: "hsl(var(--game-card-bg))",
+          color: "hsl(var(--game-accent))",
+          borderRadius: 2,
+        }}
+      >
+        <Gear className="h-5 w-5" />
+      </button>
       {/* LEFT — Brand */}
       <aside
         className="flex md:w-1/2 items-center justify-center px-8 py-16 md:py-12 border-b md:border-b-0 md:border-r"
@@ -324,8 +342,8 @@ function ActionCard({
 }) {
   return (
     <button
-      onClick={onClick}
-      className="group relative flex items-center justify-between overflow-hidden p-5 text-left transition-all"
+      onClick={() => { sfx.click(); onClick(); }}
+      className="press-feedback group relative flex items-center justify-between overflow-hidden p-5 text-left transition-all"
       style={{
         borderRadius: 2,
         border: `1px solid ${primary ? "hsl(var(--game-border))" : "hsl(var(--game-card-bg))"}`,
@@ -378,9 +396,9 @@ function PrimaryButton({
 }) {
   return (
     <button
-      onClick={onClick}
+      onClick={() => { sfx.click(); onClick(); }}
       disabled={disabled}
-      className="w-full py-4 px-6 text-sm font-bold uppercase tracking-wider transition-all disabled:opacity-50"
+      className="press-feedback w-full py-4 px-6 text-sm font-bold uppercase tracking-wider transition-all disabled:opacity-50"
       style={{
         fontFamily: "'Space Mono', monospace",
         background: "hsl(var(--game-accent))",

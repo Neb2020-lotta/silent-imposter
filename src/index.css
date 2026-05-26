@@ -237,3 +237,46 @@ All colors MUST be HSL.
   animation: shine 6s infinite linear;
   z-index: -1;
 }
+
+/* === Animation system === */
+@keyframes si-fade-in {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes si-scale-in {
+  0% { opacity: 0; transform: scale(0.92); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes si-flip {
+  0% { transform: rotateY(180deg); opacity: 0; }
+  60% { opacity: 1; }
+  100% { transform: rotateY(0deg); opacity: 1; }
+}
+@keyframes si-shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+  20%, 40%, 60%, 80% { transform: translateX(6px); }
+}
+@keyframes si-imposter-glow {
+  0% { box-shadow: 0 0 0 0 hsla(var(--game-accent), 0.7); }
+  50% { box-shadow: 0 0 40px 8px hsla(var(--game-accent), 0.55), 0 0 80px 4px hsla(var(--game-accent), 0.3); }
+  100% { box-shadow: 0 0 20px 2px hsla(var(--game-accent), 0.4); }
+}
+
+.animate-fade-in { animation: si-fade-in 0.45s ease-out both; }
+.animate-scale-in { animation: si-scale-in 0.35s ease-out both; }
+.animate-flip { animation: si-flip 0.7s cubic-bezier(.2,.7,.2,1) both; transform-style: preserve-3d; }
+.animate-shake { animation: si-shake 0.6s cubic-bezier(.36,.07,.19,.97) both; }
+.animate-imposter-glow { animation: si-imposter-glow 1.2s ease-out both; }
+
+.no-anim .animate-fade-in,
+.no-anim .animate-scale-in,
+.no-anim .animate-flip,
+.no-anim .animate-shake,
+.no-anim .animate-imposter-glow,
+.no-anim .game-card-shine::before {
+  animation: none !important;
+}
+
+.press-feedback { transition: transform 0.08s ease-out, filter 0.15s ease-out; }
+.press-feedback:active { transform: scale(0.96); filter: brightness(1.1); }
