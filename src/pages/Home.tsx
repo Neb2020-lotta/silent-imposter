@@ -396,9 +396,9 @@ function PrimaryButton({
 }) {
   return (
     <button
-      onClick={onClick}
+      onClick={() => { sfx.click(); onClick(); }}
       disabled={disabled}
-      className="w-full py-4 px-6 text-sm font-bold uppercase tracking-wider transition-all disabled:opacity-50"
+      className="press-feedback w-full py-4 px-6 text-sm font-bold uppercase tracking-wider transition-all disabled:opacity-50"
       style={{
         fontFamily: "'Space Mono', monospace",
         background: "hsl(var(--game-accent))",
