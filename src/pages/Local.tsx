@@ -78,10 +78,12 @@ export default function Local() {
     setRevealIdx(0);
     setShowCard(false);
     setPhase("reveal");
+    sfx.roundStart();
   };
 
   const nextReveal = () => {
     setShowCard(false);
+    sfx.click();
     if (revealIdx + 1 >= players.length) {
       setPhase("discussion");
     } else {
