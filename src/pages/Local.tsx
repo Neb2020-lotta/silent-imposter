@@ -538,7 +538,7 @@ function Primary({
   return (
     <button
       onClick={onClick}
-      className="w-full py-4 px-6 text-sm font-bold uppercase tracking-wider transition-all"
+      className="press-feedback w-full py-4 px-6 text-sm font-bold uppercase tracking-wider transition-all"
       style={{
         fontFamily: mono,
         background: "hsl(var(--game-accent))",
