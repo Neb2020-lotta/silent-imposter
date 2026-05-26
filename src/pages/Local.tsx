@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { wordCategories, pickRandomWord } from "@/lib/words";
 import { toast } from "sonner";
+import { sfx } from "@/lib/sounds";
 
 type Phase = "setup" | "reveal" | "discussion" | "voting" | "result";
 
