@@ -276,11 +276,12 @@ export default function Local() {
               </p>
 
               {!showCard ? (
-                <Primary onClick={() => setShowCard(true)}>🙈 Karte aufdecken</Primary>
+                <Primary onClick={() => { sfx.cardReveal(); setShowCard(true); }}>🙈 Karte aufdecken</Primary>
               ) : (
                 <>
                   <div
-                    className="p-8 space-y-3"
+                    key={revealIdx}
+                    className={`p-8 space-y-3 animate-flip ${players[revealIdx].isImposter ? "animate-imposter-glow" : ""}`}
                     style={{
                       background: "hsl(var(--game-card-bg))",
                       border: "1px solid hsl(var(--game-border))",
