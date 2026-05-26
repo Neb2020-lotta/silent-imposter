@@ -342,8 +342,8 @@ function ActionCard({
 }) {
   return (
     <button
-      onClick={onClick}
-      className="group relative flex items-center justify-between overflow-hidden p-5 text-left transition-all"
+      onClick={() => { sfx.click(); onClick(); }}
+      className="press-feedback group relative flex items-center justify-between overflow-hidden p-5 text-left transition-all"
       style={{
         borderRadius: 2,
         border: `1px solid ${primary ? "hsl(var(--game-border))" : "hsl(var(--game-card-bg))"}`,
