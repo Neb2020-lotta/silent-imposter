@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { wordCategories, generateRoomCode } from "@/lib/words";
 import { getClientId, getStoredName, setStoredName } from "@/lib/clientId";
 import { toast } from "sonner";
+import { Settings as Gear } from "lucide-react";
+import { sfx } from "@/lib/sounds";
 
 type Mode = "menu" | "host" | "join";
 
