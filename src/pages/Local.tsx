@@ -421,10 +421,10 @@ export default function Local() {
 
           {/* RESULT */}
           {phase === "result" && (
-            <div className="space-y-6 text-center">
+            <div className="space-y-6 text-center animate-fade-in">
               <Tag>Auflösung</Tag>
               <div
-                className="p-6 space-y-2"
+                className={`p-6 space-y-2 ${eliminated !== null && players[eliminated]?.isImposter ? "animate-imposter-glow" : "animate-shake"}`}
                 style={{
                   background: "hsl(var(--game-card-bg))",
                   border: "1px solid hsl(var(--game-accent))",
