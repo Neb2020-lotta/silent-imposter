@@ -125,10 +125,23 @@ export default function Local() {
     return top[Math.floor(Math.random() * top.length)];
   }, [tally, phase]);
 
+  // play dramatic sound when result reveals
+  if (phase === "result" && eliminated !== null && typeof window !== "undefined") {
+    // fire once per result render via microtask flag on window
+    const flag = `__si_result_${eliminated}_${players.length}`;
+    if (!(window as any)[flag]) {
+      (window as any)[flag] = true;
+      const wasImposter = players[eliminated]?.isImposter;
+      setTimeout(() => (wasImposter ? sfx.victory() : sfx.imposterReveal()), 50);
+      setTimeout(() => delete (window as any)[flag], 2000);
+    }
+  }
+
   const newRound = () => {
     setPhase("setup");
     setPlayers([]);
     setVotes([]);
+    sfx.click();
   };
 
   return (
