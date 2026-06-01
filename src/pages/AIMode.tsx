@@ -71,10 +71,9 @@ export default function AIMode() {
 
   const beginPlay = async () => {
     setPhase("playing");
-    await fetchAIHints(1);
   };
 
-  const fetchAIHints = async (r: number) => {
+  const fetchAIHints = async (r: number, priorHints: Hint[]) => {
     if (!secretWord) return;
     setLoading(true);
     try {
@@ -85,7 +84,7 @@ export default function AIMode() {
           word: secretWord.word,
           hint: secretWord.hint,
           round: r,
-          previousHints: hints.map((h) => ({ name: h.name, text: h.text })),
+          previousHints: priorHints.map((h) => ({ name: h.name, text: h.text })),
           players: aiPlayers.map((p) => ({
             name: p.name,
             isImposter: p.isImposter,
@@ -110,9 +109,13 @@ export default function AIMode() {
     }
   };
 
-  const submitMyHint = (text: string) => {
+  const submitMyHint = async (text: string) => {
     if (!me) return;
-    setHints((prev) => [...prev, { playerId: me.id, name: me.name, text, round }]);
+    const myHint: Hint = { playerId: me.id, name: me.name, text, round };
+    const updated = [...hints, myHint];
+    setHints(updated);
+    // KI sieht nun deinen Hinweis und reagiert darauf
+    await fetchAIHints(round, updated);
   };
 
   const nextRound = async () => {
@@ -120,9 +123,8 @@ export default function AIMode() {
       setPhase("voting");
       return;
     }
-    const next = round + 1;
-    setRound(next);
-    await fetchAIHints(next);
+    setRound(round + 1);
+    // Spieler ist in der neuen Runde zuerst dran; KI reagiert nach Abgabe
   };
 
   const submitVote = (pid: string) => {
