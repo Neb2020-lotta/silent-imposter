@@ -246,18 +246,6 @@ export default function Home() {
                       </SelectContent>
                     </Select>
                   </Field>
-                  <Field label="Anzahl Imposter">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={4}
-                      value={imposterCount}
-                      onChange={(e) =>
-                        setImposterCount(Math.max(1, Math.min(4, parseInt(e.target.value) || 1)))
-                      }
-                      style={inputStyle}
-                    />
-                  </Field>
                   <PrimaryButton onClick={createRoom} disabled={busy}>
                     Raum erstellen
                   </PrimaryButton>
