@@ -8,7 +8,6 @@ import {
   resetSettings,
   updateSettings,
   useSettings,
-  type Difficulty,
   type Language,
 } from "@/lib/settings";
 import { sfx } from "@/lib/sounds";
@@ -117,26 +116,6 @@ export default function SettingsPage() {
           />
         </Section>
 
-        {/* Difficulty */}
-        <Section>
-          <div className="space-y-3">
-            <Label mono="game.difficulty">{t("difficulty")}</Label>
-            <div className="grid grid-cols-3 gap-2">
-              {(["easy", "medium", "hard"] as Difficulty[]).map((d) => (
-                <PillBtn
-                  key={d}
-                  active={s.difficulty === d}
-                  onClick={() => {
-                    updateSettings({ difficulty: d });
-                    sfx.click();
-                  }}
-                >
-                  {t(d)}
-                </PillBtn>
-              ))}
-            </div>
-          </div>
-        </Section>
 
         {/* Language */}
         <Section>
