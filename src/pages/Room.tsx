@@ -323,10 +323,6 @@ export default function Room() {
 
               <div className="term-divider" />
 
-              <div className="flex flex-wrap gap-2 text-xs term-mono" style={{ color: "hsl(var(--game-secondary))" }}>
-                <span className="term-chip">imposter: {room.imposter_count}</span>
-                <span className="term-chip">hints: {HINTS_REQUIRED}</span>
-              </div>
 
               {isHost ? (
                 <button
