@@ -8,7 +8,6 @@ import {
   resetSettings,
   updateSettings,
   useSettings,
-  type Difficulty,
   type Language,
 } from "@/lib/settings";
 import { sfx } from "@/lib/sounds";
