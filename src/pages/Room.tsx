@@ -3,7 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { getClientId } from "@/lib/clientId";
-import { pickRandomWord } from "@/lib/words";
+import { pickRandomWord, wordCategories } from "@/lib/words";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ChatPanel from "@/components/ChatPanel";
 import { toast } from "sonner";
 
@@ -289,7 +290,35 @@ export default function Room() {
                     <span style={{ color: "hsl(var(--game-secondary))" }}> · {players.length}</span>
                   </h2>
                 </div>
-                <span className="term-chip">{room.category}</span>
+                {isHost ? (
+                  <Select
+                    value={room.category}
+                    onValueChange={async (v) => {
+                      const { error } = await supabase.from("rooms").update({ category: v }).eq("id", room.id);
+                      if (error) toast.error("Update fehlgeschlagen");
+                    }}
+                  >
+                    <SelectTrigger
+                      className="h-8 w-auto min-w-[140px] text-xs uppercase tracking-widest"
+                      style={{
+                        background: "hsl(var(--game-input-bg))",
+                        border: "1px solid hsl(var(--game-border))",
+                        color: "hsl(var(--game-accent))",
+                        borderRadius: 2,
+                        fontFamily: "'Space Mono', monospace",
+                      }}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(wordCategories).map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <span className="term-chip">{room.category}</span>
+                )}
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">

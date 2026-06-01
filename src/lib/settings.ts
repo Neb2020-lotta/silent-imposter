@@ -15,7 +15,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   sounds: true,
   animations: true,
-  roundTimer: 90,
+  roundTimer: 0,
   imposterCount: 1,
   difficulty: "medium",
   language: "de",
