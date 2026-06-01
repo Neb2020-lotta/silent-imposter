@@ -33,7 +33,7 @@ export default function Home() {
         roomCode = generateRoomCode();
         const { data, error } = await supabase
           .from("rooms")
-          .insert({ code: roomCode, host_id: clientId, category, imposter_count: imposterCount })
+          .insert({ code: roomCode, host_id: clientId, category, imposter_count: 1 })
           .select("id")
           .single();
         if (!error && data) roomId = data.id;
