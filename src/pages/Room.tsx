@@ -11,7 +11,7 @@ type Room = Tables<"rooms">;
 type Player = Tables<"players">;
 type Message = Tables<"messages">;
 
-const HINTS_REQUIRED = 3;
+const HINTS_REQUIRED = 1;
 
 export default function Room() {
   const { code } = useParams<{ code: string }>();
@@ -323,10 +323,6 @@ export default function Room() {
 
               <div className="term-divider" />
 
-              <div className="flex flex-wrap gap-2 text-xs term-mono" style={{ color: "hsl(var(--game-secondary))" }}>
-                <span className="term-chip">imposter: {room.imposter_count}</span>
-                <span className="term-chip">hints: {HINTS_REQUIRED}</span>
-              </div>
 
               {isHost ? (
                 <button

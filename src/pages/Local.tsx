@@ -37,8 +37,8 @@ export default function Local() {
 
   // Setup
   const [names, setNames] = useState<string[]>(["", "", ""]);
-  const [category, setCategory] = useState("Allgemein");
-  const [imposterCount, setImposterCount] = useState(1);
+  const [category, setCategory] = useState("Alle Wörter");
+  const imposterCount = 1;
 
   // Game state
   const [players, setPlayers] = useState<LocalPlayer[]>([]);
@@ -245,18 +245,6 @@ export default function Local() {
                 </Select>
               </Field>
 
-              <Field label="Anzahl Imposter">
-                <Input
-                  type="number"
-                  min={1}
-                  max={4}
-                  value={imposterCount}
-                  onChange={(e) =>
-                    setImposterCount(Math.max(1, Math.min(4, parseInt(e.target.value) || 1)))
-                  }
-                  style={inputStyle}
-                />
-              </Field>
 
               <Primary onClick={startGame}>Spiel starten</Primary>
             </div>

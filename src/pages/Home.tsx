@@ -17,8 +17,7 @@ export default function Home() {
   const [mode, setMode] = useState<Mode>("menu");
   const [name, setName] = useState(getStoredName());
   const [code, setCode] = useState("");
-  const [category, setCategory] = useState("Allgemein");
-  const [imposterCount, setImposterCount] = useState(1);
+  const [category, setCategory] = useState("Alle Wörter");
   const [busy, setBusy] = useState(false);
 
   const createRoom = async () => {
@@ -34,7 +33,7 @@ export default function Home() {
         roomCode = generateRoomCode();
         const { data, error } = await supabase
           .from("rooms")
-          .insert({ code: roomCode, host_id: clientId, category, imposter_count: imposterCount })
+          .insert({ code: roomCode, host_id: clientId, category, imposter_count: 1 })
           .select("id")
           .single();
         if (!error && data) roomId = data.id;
@@ -246,18 +245,6 @@ export default function Home() {
                         ))}
                       </SelectContent>
                     </Select>
-                  </Field>
-                  <Field label="Anzahl Imposter">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={4}
-                      value={imposterCount}
-                      onChange={(e) =>
-                        setImposterCount(Math.max(1, Math.min(4, parseInt(e.target.value) || 1)))
-                      }
-                      style={inputStyle}
-                    />
                   </Field>
                   <PrimaryButton onClick={createRoom} disabled={busy}>
                     Raum erstellen
