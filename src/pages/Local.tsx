@@ -37,8 +37,8 @@ export default function Local() {
 
   // Setup
   const [names, setNames] = useState<string[]>(["", "", ""]);
-  const [category, setCategory] = useState("Allgemein");
-  const [imposterCount, setImposterCount] = useState(1);
+  const [category, setCategory] = useState("Alle Wörter");
+  const imposterCount = 1;
 
   // Game state
   const [players, setPlayers] = useState<LocalPlayer[]>([]);
