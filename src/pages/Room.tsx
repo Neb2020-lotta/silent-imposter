@@ -11,7 +11,7 @@ type Room = Tables<"rooms">;
 type Player = Tables<"players">;
 type Message = Tables<"messages">;
 
-const HINTS_REQUIRED = 3;
+const HINTS_REQUIRED = 1;
 
 export default function Room() {
   const { code } = useParams<{ code: string }>();
