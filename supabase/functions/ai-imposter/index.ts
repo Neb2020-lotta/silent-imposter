@@ -30,9 +30,11 @@ Deno.serve(async (req) => {
 Kategorie: ${category}.
 Es gibt mehrere Spieler. Jeder Crewmate kennt das geheime Wort. Der Imposter kennt nur einen vagen Hinweis und muss bluffen, ohne aufzufliegen.
 Jeder Spieler gibt pro Runde EINEN sehr kurzen Hinweis (max. 6 Wörter), der das Wort beschreibt, ohne es zu nennen.
-- Crewmates: gib einen subtilen, nicht zu offensichtlichen Hinweis (nicht das Wort nennen, keine direkten Synonyme).
-- Imposter: bluffe basierend nur auf dem allgemeinen Hinweis. Klinge plausibel, aber bleibe vage.
-Wiederhole keine vorherigen Hinweise. Antworte NUR mit dem Hinweistext, ohne Anführungszeichen, ohne Namen, ohne Erklärung.`;
+- Lies die bisherigen Hinweise GENAU, besonders den Hinweis des menschlichen Spielers, und reagiere darauf:
+  * Als Crewmate: knüpfe thematisch an, bestätige subtil, oder ergänze einen neuen Aspekt — niemals das Wort nennen, keine direkten Synonyme.
+  * Als Imposter: analysiere, was die anderen gesagt haben, und passe deinen Bluff daran an, damit er glaubwürdig zum Thema passt. Sei vage, aber konsistent.
+- Falls ein Hinweis verdächtig wirkt (zu vage oder unpassend), darfst du als Crewmate vorsichtig misstrauisch klingen.
+- Wiederhole keine vorherigen Hinweise. Antworte NUR mit dem Hinweistext, ohne Anführungszeichen, ohne Namen, ohne Erklärung.`;
 
     const historyText = previousHints.length
       ? `\n\nBisherige Hinweise:\n${previousHints.map((h) => `- ${h.name}: ${h.text}`).join("\n")}`
