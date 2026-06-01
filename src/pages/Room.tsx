@@ -3,7 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { getClientId } from "@/lib/clientId";
-import { pickRandomWord } from "@/lib/words";
+import { pickRandomWord, wordCategories } from "@/lib/words";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ChatPanel from "@/components/ChatPanel";
 import { toast } from "sonner";
 
