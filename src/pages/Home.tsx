@@ -17,8 +17,7 @@ export default function Home() {
   const [mode, setMode] = useState<Mode>("menu");
   const [name, setName] = useState(getStoredName());
   const [code, setCode] = useState("");
-  const [category, setCategory] = useState("Allgemein");
-  const [imposterCount, setImposterCount] = useState(1);
+  const [category, setCategory] = useState("Alle Wörter");
   const [busy, setBusy] = useState(false);
 
   const createRoom = async () => {
