@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 export type Difficulty = "easy" | "medium" | "hard";
 export type Language = "de" | "en";
+export type ThemeId = "ember" | "neon" | "royal";
 
 export interface Settings {
   sounds: boolean;
@@ -10,6 +11,7 @@ export interface Settings {
   imposterCount: number;
   difficulty: Difficulty;
   language: Language;
+  theme: ThemeId;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -19,6 +21,7 @@ export const DEFAULT_SETTINGS: Settings = {
   imposterCount: 1,
   difficulty: "medium",
   language: "de",
+  theme: "ember",
 };
 
 const KEY = "silent-imposter-settings";

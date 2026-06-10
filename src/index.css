@@ -81,6 +81,42 @@ All colors MUST be HSL.
     --game-button-shadow: 0 6px 18px hsla(0, 0%, 0%, 0.5);
   }
 
+  /* Theme: Neon Cyber */
+  [data-theme="neon"] {
+    --game-bg-start: 240 60% 6%;
+    --game-bg-mid:   240 55% 8%;
+    --game-bg-end:   245 55% 12%;
+    --game-card-bg:  240 40% 14%;
+    --game-text:     180 100% 96%;
+    --game-accent:   189 94% 48%;     /* cyan */
+    --game-secondary: 260 30% 60%;
+    --game-imposter: 320 95% 60%;
+    --game-restart:  180 100% 96%;
+    --game-reveal:   189 94% 48%;
+    --game-border:   245 50% 25%;
+    --game-input-bg: 240 50% 10%;
+    --game-troll:    320 95% 60%;
+    --game-success:  150 90% 55%;
+  }
+
+  /* Theme: Noir Gold */
+  [data-theme="royal"] {
+    --game-bg-start: 0 0% 5%;
+    --game-bg-mid:   0 0% 7%;
+    --game-bg-end:   0 0% 10%;
+    --game-card-bg:  0 0% 12%;
+    --game-text:     45 40% 95%;
+    --game-accent:   43 55% 54%;      /* gold */
+    --game-secondary: 40 20% 50%;
+    --game-imposter: 43 55% 54%;
+    --game-restart:  45 40% 95%;
+    --game-reveal:   43 55% 54%;
+    --game-border:   40 20% 25%;
+    --game-input-bg: 0 0% 8%;
+    --game-troll:    43 55% 54%;
+    --game-success:  43 70% 60%;
+  }
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;

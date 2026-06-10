@@ -10,6 +10,7 @@ import {
   useSettings,
   type Language,
 } from "@/lib/settings";
+import { THEMES } from "@/lib/themes";
 import { sfx } from "@/lib/sounds";
 import { t } from "@/lib/i18n";
 
@@ -134,6 +135,42 @@ export default function SettingsPage() {
                   {l === "de" ? "Deutsch" : "English"}
                 </PillBtn>
               ))}
+            </div>
+          </div>
+        </Section>
+
+        {/* Theme */}
+        <Section>
+          <div className="space-y-3">
+            <Label mono="theme.skin">{t("theme")}</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {THEMES.map((th) => {
+                const active = s.theme === th.id;
+                return (
+                  <button
+                    key={th.id}
+                    onClick={() => {
+                      updateSettings({ theme: th.id });
+                      sfx.click();
+                    }}
+                    className="press-feedback p-3 text-left transition-colors"
+                    style={{
+                      fontFamily: mono,
+                      borderRadius: 2,
+                      border: `1px solid ${active ? "hsl(var(--game-accent))" : "hsl(var(--game-border))"}`,
+                      background: active ? "hsla(var(--game-accent), 0.10)" : "transparent",
+                      color: active ? "hsl(var(--game-accent))" : "hsl(var(--game-text))",
+                    }}
+                  >
+                    <div className="flex gap-1 mb-2">
+                      {th.swatch.map((c) => (
+                        <span key={c} style={{ background: c, width: 18, height: 18, borderRadius: 2, display: "inline-block" }} />
+                      ))}
+                    </div>
+                    <div className="text-[11px] uppercase tracking-widest">{th.label}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </Section>
