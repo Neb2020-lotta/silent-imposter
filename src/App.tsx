@@ -12,14 +12,18 @@ import AIMode from "./pages/AIMode";
 import SettingsPage from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import { useSettings } from "@/lib/settings";
+import { applyTheme } from "@/lib/themes";
 
 const queryClient = new QueryClient();
 
 function AnimationsRoot({ children }: { children: React.ReactNode }) {
-  const { animations } = useSettings();
+  const { animations, theme } = useSettings();
   useEffect(() => {
     document.documentElement.classList.toggle("no-anim", !animations);
   }, [animations]);
+  useEffect(() => {
+    applyTheme(theme);
+  }, [theme]);
   return <>{children}</>;
 }
 
