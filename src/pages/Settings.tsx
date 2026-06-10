@@ -10,6 +10,7 @@ import {
   useSettings,
   type Language,
 } from "@/lib/settings";
+import { THEMES } from "@/lib/themes";
 import { sfx } from "@/lib/sounds";
 import { t } from "@/lib/i18n";
 
