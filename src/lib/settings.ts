@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { Palette } from "./color";
 
 export type Difficulty = "easy" | "medium" | "hard";
 export type Language = "de" | "en";
@@ -14,8 +15,10 @@ export interface Settings {
   theme: ThemeId;
   /** Selected word categories. Empty = all categories. */
   categoryFilter: string[];
-  /** Validated hex color (#RRGGBB) for the accent CSS variable. null = theme default. */
+  /** Deprecated single accent — kept for back-compat; mirrored into palette.accent. */
   accentColor: string | null;
+  /** Per-slot color overrides (validated hex). Missing slot = theme default. */
+  palette: Palette;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -28,6 +31,7 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: "ember",
   categoryFilter: [],
   accentColor: null,
+  palette: {},
 };
 
 const KEY = "silent-imposter-settings";
