@@ -13,17 +13,20 @@ import SettingsPage from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import { useSettings } from "@/lib/settings";
 import { applyTheme } from "@/lib/themes";
+import { applyAccentColor } from "@/lib/color";
 
 const queryClient = new QueryClient();
 
 function AnimationsRoot({ children }: { children: React.ReactNode }) {
-  const { animations, theme } = useSettings();
+  const { animations, theme, accentColor } = useSettings();
   useEffect(() => {
     document.documentElement.classList.toggle("no-anim", !animations);
   }, [animations]);
   useEffect(() => {
     applyTheme(theme);
-  }, [theme]);
+    // Re-apply accent after theme change so the user override persists across themes.
+    applyAccentColor(accentColor);
+  }, [theme, accentColor]);
   return <>{children}</>;
 }
 

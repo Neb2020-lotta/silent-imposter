@@ -12,6 +12,10 @@ export interface Settings {
   difficulty: Difficulty;
   language: Language;
   theme: ThemeId;
+  /** Selected word categories. Empty = all categories. */
+  categoryFilter: string[];
+  /** Validated hex color (#RRGGBB) for the accent CSS variable. null = theme default. */
+  accentColor: string | null;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -22,6 +26,8 @@ export const DEFAULT_SETTINGS: Settings = {
   difficulty: "medium",
   language: "de",
   theme: "ember",
+  categoryFilter: [],
+  accentColor: null,
 };
 
 const KEY = "silent-imposter-settings";
