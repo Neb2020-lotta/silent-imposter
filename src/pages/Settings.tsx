@@ -179,6 +179,16 @@ export default function SettingsPage() {
           </div>
         </Section>
 
+        {/* Category filter */}
+        <Section>
+          <CategoryFilter />
+        </Section>
+
+        {/* Accent color picker */}
+        <Section>
+          <AccentColorPicker />
+        </Section>
+
         {/* Reset */}
         <Button
           onClick={handleReset}
