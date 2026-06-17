@@ -14,7 +14,7 @@ import {
 } from "@/lib/settings";
 import { THEMES } from "@/lib/themes";
 import { wordCategories } from "@/lib/words";
-import { HEX_COLOR_REGEX, isValidHex } from "@/lib/color";
+import { HEX_COLOR_REGEX, isValidHex, expandHex, PALETTE_SLOTS, type PaletteSlot } from "@/lib/color";
 import { sfx } from "@/lib/sounds";
 import { t } from "@/lib/i18n";
 
@@ -184,9 +184,9 @@ export default function SettingsPage() {
           <CategoryFilter />
         </Section>
 
-        {/* Accent color picker */}
+        {/* Color palette */}
         <Section>
-          <AccentColorPicker />
+          <ColorPalette />
         </Section>
 
         {/* Reset */}
