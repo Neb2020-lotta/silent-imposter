@@ -1,8 +1,10 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RotateCcw, Settings as Gear } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, RotateCcw, Settings as Gear, Check } from "lucide-react";
 import { toast } from "sonner";
 import {
   resetSettings,
@@ -11,6 +13,8 @@ import {
   type Language,
 } from "@/lib/settings";
 import { THEMES } from "@/lib/themes";
+import { wordCategories } from "@/lib/words";
+import { HEX_COLOR_REGEX, isValidHex } from "@/lib/color";
 import { sfx } from "@/lib/sounds";
 import { t } from "@/lib/i18n";
 
