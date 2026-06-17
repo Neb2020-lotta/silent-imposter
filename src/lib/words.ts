@@ -670,8 +670,17 @@ wordCategories["Alle Wörter"] = Object.entries(wordCategories)
   .filter(([k]) => k !== "Alle Wörter")
   .flatMap(([, v]) => v);
 
+import { getSettings } from "./settings";
+
 export function pickRandomWord(category: string): WordData {
-  const list = wordCategories[category] ?? wordCategories.Allgemein;
+  let list = wordCategories[category] ?? wordCategories.Allgemein;
+  if (category === "Alle Wörter") {
+    const filter = getSettings().categoryFilter;
+    if (filter && filter.length > 0) {
+      const filtered = filter.flatMap((c) => wordCategories[c] ?? []);
+      if (filtered.length) list = filtered;
+    }
+  }
   return list[Math.floor(Math.random() * list.length)];
 }
 
