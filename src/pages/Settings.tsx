@@ -323,3 +323,150 @@ function PillBtn({
     </button>
   );
 }
+
+function CategoryFilter() {
+  const s = useSettings();
+  const allCategories = Object.keys(wordCategories).filter((c) => c !== "Alle Wörter");
+  const selected = new Set(s.categoryFilter);
+  const toggle = (cat: string) => {
+    const next = new Set(selected);
+    if (next.has(cat)) next.delete(cat);
+    else next.add(cat);
+    updateSettings({ categoryFilter: Array.from(next) });
+    sfx.click();
+  };
+  return (
+    <div className="space-y-3">
+      <div className="flex items-end justify-between gap-2">
+        <Label mono="words.filter">{t("categoryFilter")}</Label>
+        <div className="flex gap-2">
+          <button
+            onClick={() => { updateSettings({ categoryFilter: allCategories }); sfx.click(); }}
+            className="text-[10px] uppercase tracking-widest px-2 py-1"
+            style={{ fontFamily: mono, color: "hsl(var(--game-secondary))", border: "1px solid hsl(var(--game-border))", borderRadius: 2 }}
+          >
+            {t("selectAll")}
+          </button>
+          <button
+            onClick={() => { updateSettings({ categoryFilter: [] }); sfx.click(); }}
+            className="text-[10px] uppercase tracking-widest px-2 py-1"
+            style={{ fontFamily: mono, color: "hsl(var(--game-secondary))", border: "1px solid hsl(var(--game-border))", borderRadius: 2 }}
+          >
+            {t("clear")}
+          </button>
+        </div>
+      </div>
+      <p className="text-[11px]" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
+        {t("categoryFilterHint")}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {allCategories.map((cat) => {
+          const active = selected.has(cat);
+          return (
+            <button
+              key={cat}
+              onClick={() => toggle(cat)}
+              className="press-feedback inline-flex items-center gap-1.5 px-3 py-2 text-[11px] uppercase tracking-widest transition-colors"
+              style={{
+                fontFamily: mono,
+                borderRadius: 2,
+                border: `1px solid ${active ? "hsl(var(--game-accent))" : "hsl(var(--game-border))"}`,
+                background: active ? "hsla(var(--game-accent), 0.12)" : "transparent",
+                color: active ? "hsl(var(--game-accent))" : "hsl(var(--game-text))",
+              }}
+              aria-pressed={active}
+            >
+              {active && <Check className="h-3 w-3" />}
+              {cat}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function AccentColorPicker() {
+  const s = useSettings();
+  const initial = s.accentColor ?? "#e85d3a";
+  const [draft, setDraft] = useState(initial);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setDraft(s.accentColor ?? "#e85d3a");
+  }, [s.accentColor]);
+
+  const commit = (value: string) => {
+    const trimmed = value.trim();
+    // SECURITY: never accept unvalidated input — regex check before any DOM/storage write.
+    if (!HEX_COLOR_REGEX.test(trimmed)) {
+      setError(t("invalidColor"));
+      return;
+    }
+    setError(null);
+    updateSettings({ accentColor: trimmed });
+    sfx.click();
+  };
+
+  const onTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setDraft(v);
+    if (v === "" || isValidHex(v)) setError(null);
+  };
+
+  const onNativeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // <input type="color"> always returns a normalized #rrggbb — still validate.
+    commit(e.target.value);
+  };
+
+  const onReset = () => {
+    setError(null);
+    setDraft("#e85d3a");
+    updateSettings({ accentColor: null });
+    sfx.click();
+  };
+
+  return (
+    <div className="space-y-3">
+      <Label mono="ui.accent">{t("accentColor")}</Label>
+      <p className="text-[11px]" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
+        {t("accentColorHint")}
+      </p>
+      <div className="flex items-center gap-3 flex-wrap">
+        <input
+          type="color"
+          aria-label={t("accentColor")}
+          value={isValidHex(draft) ? (draft.length === 4
+            ? "#" + draft.slice(1).split("").map((c) => c + c).join("")
+            : draft) : "#e85d3a"}
+          onChange={onNativeChange}
+          className="h-10 w-12 cursor-pointer border bg-transparent"
+        />
+        <Input
+          value={draft}
+          onChange={onTextChange}
+          onBlur={() => commit(draft)}
+          onKeyDown={(e) => { if (e.key === "Enter") commit(draft); }}
+          placeholder="#e85d3a"
+          maxLength={7}
+          spellCheck={false}
+          aria-invalid={!!error}
+          className="term-input max-w-[160px] uppercase"
+          style={{ fontFamily: mono }}
+        />
+        <button
+          onClick={onReset}
+          className="press-feedback text-[10px] uppercase tracking-widest px-3 py-2"
+          style={{ fontFamily: mono, border: "1px solid hsl(var(--game-border))", color: "hsl(var(--game-secondary))", borderRadius: 2 }}
+        >
+          {t("resetColor")}
+        </button>
+      </div>
+      {error && (
+        <p className="text-[11px]" style={{ fontFamily: mono, color: "hsl(var(--destructive))" }} role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
