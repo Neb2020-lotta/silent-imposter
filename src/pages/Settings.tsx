@@ -515,7 +515,6 @@ function SlotPicker({
           className="text-[10px] uppercase tracking-widest"
           style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
         >
-          {/* @ts-expect-error - dynamic translation key from PALETTE_SLOTS */}
           {t(labelKey)}
         </span>
         <code
