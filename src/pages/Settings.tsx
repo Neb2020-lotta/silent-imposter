@@ -386,80 +386,172 @@ function CategoryFilter() {
   );
 }
 
-function AccentColorPicker() {
+const SLOT_DEFAULTS: Record<PaletteSlot, string> = {
+  accent: "#e85d3a",
+  background: "#1a1a1a",
+  backgroundEnd: "#242424",
+  card: "#2d2d2d",
+  text: "#f5f5f5",
+  secondary: "#4a4a4a",
+  border: "#4a4a4a",
+  input: "#242424",
+};
+
+const SLOT_ORDER: PaletteSlot[] = [
+  "accent",
+  "background",
+  "backgroundEnd",
+  "card",
+  "text",
+  "secondary",
+  "border",
+  "input",
+];
+
+function ColorPalette() {
   const s = useSettings();
-  const initial = s.accentColor ?? "#e85d3a";
+
+  const resetAll = () => {
+    updateSettings({ palette: {}, accentColor: null });
+    sfx.click();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-end justify-between gap-2">
+        <Label mono="ui.palette">{t("colorPalette")}</Label>
+        <button
+          onClick={resetAll}
+          className="press-feedback text-[10px] uppercase tracking-widest px-3 py-2"
+          style={{ fontFamily: mono, border: "1px solid hsl(var(--game-border))", color: "hsl(var(--game-secondary))", borderRadius: 2 }}
+        >
+          {t("resetAllColors")}
+        </button>
+      </div>
+      <p className="text-[11px]" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
+        {t("colorPaletteHint")}
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {SLOT_ORDER.map((slot) => (
+          <SlotPicker
+            key={slot}
+            slot={slot}
+            value={s.palette?.[slot] ?? (slot === "accent" ? s.accentColor : null) ?? null}
+            fallback={SLOT_DEFAULTS[slot]}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SlotPicker({
+  slot,
+  value,
+  fallback,
+}: {
+  slot: PaletteSlot;
+  value: string | null;
+  fallback: string;
+}) {
+  const s = useSettings();
+  const initial = value ?? fallback;
   const [draft, setDraft] = useState(initial);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setDraft(s.accentColor ?? "#e85d3a");
-  }, [s.accentColor]);
+    setDraft(value ?? fallback);
+  }, [value, fallback]);
 
-  const commit = (value: string) => {
-    const trimmed = value.trim();
-    // SECURITY: never accept unvalidated input — regex check before any DOM/storage write.
+  const writePalette = (next: string | null) => {
+    const palette = { ...(s.palette ?? {}) };
+    if (next === null) delete palette[slot];
+    else palette[slot] = next;
+    // Mirror accent into legacy field for back-compat.
+    const patch: Partial<typeof s> = { palette };
+    if (slot === "accent") patch.accentColor = next;
+    updateSettings(patch);
+  };
+
+  const commit = (raw: string) => {
+    const trimmed = raw.trim();
+    // SECURITY: validate via strict regex before any storage/DOM write.
     if (!HEX_COLOR_REGEX.test(trimmed)) {
       setError(t("invalidColor"));
       return;
     }
     setError(null);
-    updateSettings({ accentColor: trimmed });
+    writePalette(trimmed);
     sfx.click();
   };
 
-  const onTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onText = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
     setDraft(v);
     if (v === "" || isValidHex(v)) setError(null);
   };
 
-  const onNativeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // <input type="color"> always returns a normalized #rrggbb — still validate.
+  const onNative = (e: React.ChangeEvent<HTMLInputElement>) => {
     commit(e.target.value);
   };
 
   const onReset = () => {
     setError(null);
-    setDraft("#e85d3a");
-    updateSettings({ accentColor: null });
+    setDraft(fallback);
+    writePalette(null);
     sfx.click();
   };
 
+  const swatch = isValidHex(draft) ? expandHex(draft) : fallback;
+  const labelKey = `slot_${slot}` as const;
+
   return (
-    <div className="space-y-3">
-      <Label mono="ui.accent">{t("accentColor")}</Label>
-      <p className="text-[11px]" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
-        {t("accentColorHint")}
-      </p>
-      <div className="flex items-center gap-3 flex-wrap">
+    <div
+      className="space-y-2 p-3"
+      style={{ border: "1px solid hsl(var(--game-border))", borderRadius: 2 }}
+    >
+      <div className="flex items-center justify-between">
+        <span
+          className="text-[10px] uppercase tracking-widest"
+          style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
+        >
+          {/* @ts-expect-error - dynamic translation key from PALETTE_SLOTS */}
+          {t(labelKey)}
+        </span>
+        <code
+          className="text-[10px]"
+          style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
+        >
+          {PALETTE_SLOTS[slot]}
+        </code>
+      </div>
+      <div className="flex items-center gap-2">
         <input
           type="color"
-          aria-label={t("accentColor")}
-          value={isValidHex(draft) ? (draft.length === 4
-            ? "#" + draft.slice(1).split("").map((c) => c + c).join("")
-            : draft) : "#e85d3a"}
-          onChange={onNativeChange}
-          className="h-10 w-12 cursor-pointer border bg-transparent"
+          aria-label={PALETTE_SLOTS[slot]}
+          value={swatch}
+          onChange={onNative}
+          className="h-9 w-10 cursor-pointer border bg-transparent shrink-0"
         />
         <Input
           value={draft}
-          onChange={onTextChange}
+          onChange={onText}
           onBlur={() => commit(draft)}
           onKeyDown={(e) => { if (e.key === "Enter") commit(draft); }}
-          placeholder="#e85d3a"
+          placeholder={fallback}
           maxLength={7}
           spellCheck={false}
           aria-invalid={!!error}
-          className="term-input max-w-[160px] uppercase"
+          className="term-input uppercase flex-1 min-w-0"
           style={{ fontFamily: mono }}
         />
         <button
           onClick={onReset}
-          className="press-feedback text-[10px] uppercase tracking-widest px-3 py-2"
+          className="press-feedback text-[10px] uppercase tracking-widest px-2 py-2 shrink-0"
           style={{ fontFamily: mono, border: "1px solid hsl(var(--game-border))", color: "hsl(var(--game-secondary))", borderRadius: 2 }}
+          title={t("resetColor")}
         >
-          {t("resetColor")}
+          <RotateCcw className="h-3 w-3" />
         </button>
       </div>
       {error && (
@@ -470,3 +562,4 @@ function AccentColorPicker() {
     </div>
   );
 }
+
