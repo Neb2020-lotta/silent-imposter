@@ -1,8 +1,7 @@
 // Safe color utilities. All inputs MUST be validated with HEX_COLOR_REGEX
-// before being applied to the DOM. The validated color is exclusively
-// written to a CSS custom property (--game-accent) on :root — never as
-// an inline style for arbitrary user content. This prevents style/XSS
-// injection through the color picker.
+// before being applied to the DOM. Validated colors are written exclusively
+// to predefined CSS custom properties on :root — never as inline styles for
+// arbitrary user content. This prevents style/XSS injection.
 
 export const HEX_COLOR_REGEX = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
 
@@ -10,7 +9,7 @@ export function isValidHex(input: string): boolean {
   return HEX_COLOR_REGEX.test(input);
 }
 
-function expandHex(hex: string): string {
+export function expandHex(hex: string): string {
   if (hex.length === 4) {
     return "#" + hex.slice(1).split("").map((c) => c + c).join("");
   }
@@ -42,19 +41,58 @@ export function hexToHslString(hex: string): string | null {
   return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 }
 
-const ACCENT_VAR = "--game-accent";
+/**
+ * Palette slots. Each maps a user-friendly key to a fixed CSS variable.
+ * Only variables in this allowlist can ever be written to — preventing
+ * arbitrary property injection from saved/imported settings.
+ */
+export const PALETTE_SLOTS = {
+  accent: "--game-accent",
+  background: "--game-bg-start",
+  backgroundEnd: "--game-bg-end",
+  card: "--game-card-bg",
+  text: "--game-text",
+  secondary: "--game-secondary",
+  border: "--game-border",
+  input: "--game-input-bg",
+} as const;
 
-/** Apply a validated hex color as a CSS variable. Inline styles are never used for user content. */
+export type PaletteSlot = keyof typeof PALETTE_SLOTS;
+
+export type Palette = Partial<Record<PaletteSlot, string | null>>;
+
+const ACCENT_VAR = PALETTE_SLOTS.accent;
+
+/** Backward-compat single-accent applier. */
 export function applyAccentColor(hex: string | null) {
+  applyPaletteSlot("accent", hex);
+}
+
+/** Apply a single palette slot. Removes the override if hex is null/invalid. */
+export function applyPaletteSlot(slot: PaletteSlot, hex: string | null) {
   const root = document.documentElement;
+  const cssVar = PALETTE_SLOTS[slot];
   if (!hex) {
-    root.style.removeProperty(ACCENT_VAR);
+    root.style.removeProperty(cssVar);
     return;
   }
   const hsl = hexToHslString(hex);
   if (!hsl) {
-    root.style.removeProperty(ACCENT_VAR);
+    root.style.removeProperty(cssVar);
     return;
   }
-  root.style.setProperty(ACCENT_VAR, hsl);
+  root.style.setProperty(cssVar, hsl);
+}
+
+/** Apply an entire palette. Unknown keys are ignored by the allowlist. */
+export function applyPalette(palette: Palette | null | undefined) {
+  // First clear all slots, then apply provided ones — keeps state predictable across theme changes.
+  const root = document.documentElement;
+  (Object.keys(PALETTE_SLOTS) as PaletteSlot[]).forEach((slot) => {
+    root.style.removeProperty(PALETTE_SLOTS[slot]);
+  });
+  if (!palette) return;
+  (Object.keys(palette) as PaletteSlot[]).forEach((slot) => {
+    if (slot in PALETTE_SLOTS) applyPaletteSlot(slot, palette[slot] ?? null);
+  });
 }
