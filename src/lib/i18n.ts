@@ -36,6 +36,12 @@ const dict = {
     slot_secondary: "Sekundär",
     slot_border: "Rahmen",
     slot_input: "Eingabefeld",
+    customColors: "Eigene Farben",
+    customColorsHint: "Speichere deine Lieblingsfarben. Klick eine Farbe an, um sie auf eine Palette-Rolle anzuwenden.",
+    addCustomColor: "Farbe hinzufügen",
+    applyTo: "Anwenden auf",
+    remove: "Entfernen",
+    noCustomColors: "Noch keine eigenen Farben gespeichert.",
   },
   en: {
     settings: "Settings",
