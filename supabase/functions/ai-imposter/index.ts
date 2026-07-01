@@ -1,27 +1,52 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { z } from "npm:zod@3";
 
-interface AIPlayer {
-  name: string;
-  isImposter: boolean;
-  word: string; // real word for crewmates, "" for imposter (they only see hint)
-  hint: string; // generic category hint shown to imposter
-}
+const PlayerSchema = z.object({
+  name: z.string().min(1).max(30),
+  isImposter: z.boolean(),
+  word: z.string().max(60),
+  hint: z.string().max(200),
+});
 
-interface RequestBody {
-  category: string;
-  word: string;
-  hint: string;
-  players: AIPlayer[];
-  round: number;
-  previousHints: { name: string; text: string }[];
-}
+const BodySchema = z.object({
+  category: z.string().min(1).max(60),
+  word: z.string().min(1).max(60),
+  hint: z.string().max(200),
+  players: z.array(PlayerSchema).min(1).max(6),
+  round: z.number().int().min(1).max(3),
+  previousHints: z
+    .array(z.object({ name: z.string().min(1).max(30), text: z.string().max(200) }))
+    .max(30),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const body = (await req.json()) as RequestBody;
-    const { category, word, hint, players, round, previousHints } = body;
+    // Reject payloads larger than ~16 KB before parsing to short-circuit abuse
+    const raw = await req.text();
+    if (raw.length > 16_000) {
+      return new Response(JSON.stringify({ error: "payload_too_large" }), {
+        status: 413,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    let parsedInput: unknown;
+    try { parsedInput = JSON.parse(raw); } catch {
+      return new Response(JSON.stringify({ error: "invalid_json" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const parsed = BodySchema.safeParse(parsedInput);
+    if (!parsed.success) {
+      return new Response(JSON.stringify({ error: "invalid_input" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { category, word, hint, players, round, previousHints } = parsed.data;
+
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
@@ -94,7 +119,7 @@ Jeder Spieler gibt pro Runde EINEN sehr kurzen Hinweis (max. 6 Wörter), der das
     });
   } catch (e) {
     console.error("ai-imposter error", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown" }), {
+    return new Response(JSON.stringify({ error: "internal_error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

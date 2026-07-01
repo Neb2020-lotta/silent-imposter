@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { getClientId } from "@/lib/clientId";
+import { getHostSecret, getPlayerId, clearHostSecret, clearPlayerId } from "@/lib/roomAuth";
 import { pickRandomWord, wordCategories } from "@/lib/words";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ChatPanel from "@/components/ChatPanel";
@@ -11,6 +12,7 @@ import { toast } from "sonner";
 type Room = Tables<"rooms">;
 type Player = Tables<"players">;
 type Message = Tables<"messages">;
+
 
 const HINTS_REQUIRED = 1;
 
@@ -122,10 +124,18 @@ export default function Room() {
     );
   }
 
-  const me = players.find((p) => p.client_id === clientId);
-  const isHost = room.host_id === clientId;
+  const storedPlayerId = getPlayerId(room.id);
+  const hostSecret = getHostSecret(room.id);
+  const me = players.find((p) => p.id === storedPlayerId);
+  const isHost = !!hostSecret;
+
+  const rpcError = (e: unknown, fallback: string) => {
+    console.error(e);
+    toast.error(fallback);
+  };
 
   const startGame = async () => {
+    if (!hostSecret) return;
     if (players.length < 3) return toast.error("Mindestens 3 Spieler nötig");
     const word = pickRandomWord(room.category);
     const maxImp = Math.max(1, Math.min(room.imposter_count, Math.floor(players.length / 2)));
@@ -134,78 +144,67 @@ export default function Room() {
     for (let i = 0; i < maxImp; i++) {
       imposterIdx.push(indices.splice(Math.floor(Math.random() * indices.length), 1)[0]);
     }
-    const tips = [...word.typeHints].sort(() => Math.random() - 0.5);
-
-    await supabase.from("messages").delete().eq("room_id", room.id);
-
-    for (let i = 0; i < players.length; i++) {
-      const isImp = imposterIdx.includes(i);
-      await supabase
-        .from("players")
-        .update({
-          is_imposter: isImp,
-          word: isImp ? null : word.word,
-          imposter_tip: isImp ? tips.shift() || "Geheimnis" : null,
-          voted_for: null,
-        })
-        .eq("id", players[i].id);
-    }
-
+    const imposterIds = imposterIdx.map((i) => players[i].id);
+    const tips = [...word.typeHints].sort(() => Math.random() - 0.5).slice(0, imposterIds.length);
+    while (tips.length < imposterIds.length) tips.push("Geheimnis");
     const starter = players[Math.floor(Math.random() * players.length)];
-    await supabase
-      .from("rooms")
-      .update({
-        state: "playing",
-        word: word.word,
-        hint: word.hint,
-        starting_player_id: starter.id,
-        current_turn_player_id: starter.id,
-        eliminated_player_id: null,
-      })
-      .eq("id", room.id);
+
+    const { error } = await supabase.rpc("host_start_game", {
+      p_room_id: room.id,
+      p_secret: hostSecret,
+      p_word: word.word,
+      p_hint: word.hint,
+      p_imposters: imposterIds,
+      p_tips: tips,
+      p_starting: starter.id,
+    });
+    if (error) rpcError(error, "Start fehlgeschlagen");
   };
 
   const goDiscussion = async () => {
-    await supabase
-      .from("rooms")
-      .update({ state: "discussion", current_turn_player_id: room.starting_player_id })
-      .eq("id", room.id);
+    if (!hostSecret) return;
+    const { error } = await supabase.rpc("host_set_state", {
+      p_room_id: room.id, p_secret: hostSecret, p_state: "discussion",
+    });
+    if (error) rpcError(error, "Wechsel fehlgeschlagen");
   };
 
   const goVoting = async () => {
-    await supabase.from("rooms").update({ state: "voting" }).eq("id", room.id);
+    if (!hostSecret) return;
+    const { error } = await supabase.rpc("host_set_state", {
+      p_room_id: room.id, p_secret: hostSecret, p_state: "voting",
+    });
+    if (error) rpcError(error, "Wechsel fehlgeschlagen");
   };
 
   const goReveal = async () => {
-    await supabase.from("rooms").update({ state: "reveal" }).eq("id", room.id);
+    if (!hostSecret) return;
+    const { error } = await supabase.rpc("host_set_state", {
+      p_room_id: room.id, p_secret: hostSecret, p_state: "reveal",
+    });
+    if (error) rpcError(error, "Wechsel fehlgeschlagen");
   };
 
   const castVote = async (targetId: string) => {
     if (!me) return;
-    await supabase.from("players").update({ voted_for: targetId }).eq("id", me.id);
+    const { error } = await supabase.rpc("player_cast_vote", {
+      p_room_id: room.id, p_client_id: clientId, p_target: targetId,
+    });
+    if (error) rpcError(error, "Abstimmung fehlgeschlagen");
   };
 
   const newRound = async () => {
-    await supabase.from("messages").delete().eq("room_id", room.id);
-    await supabase
-      .from("players")
-      .update({ is_imposter: false, word: null, imposter_tip: null, voted_for: null })
-      .eq("room_id", room.id);
-    await supabase
-      .from("rooms")
-      .update({
-        state: "lobby",
-        word: null,
-        hint: null,
-        starting_player_id: null,
-        current_turn_player_id: null,
-        eliminated_player_id: null,
-      })
-      .eq("id", room.id);
+    if (!hostSecret) return;
+    const { error } = await supabase.rpc("host_new_round", {
+      p_room_id: room.id, p_secret: hostSecret,
+    });
+    if (error) rpcError(error, "Neue Runde fehlgeschlagen");
   };
 
   const leaveRoom = async () => {
-    if (me) await supabase.from("players").delete().eq("id", me.id);
+    await supabase.rpc("player_leave", { p_room_id: room.id, p_client_id: clientId });
+    clearPlayerId(room.id);
+    clearHostSecret(room.id);
     navigate("/");
   };
 
@@ -226,22 +225,27 @@ export default function Room() {
         break;
       }
     }
-    await supabase.from("rooms").update({ current_turn_player_id: next }).eq("id", room.id);
+    const { error } = await supabase.rpc("player_advance_turn", {
+      p_room_id: room.id, p_client_id: clientId, p_next_player: next,
+    });
+    if (error) rpcError(error, "Zug-Wechsel fehlgeschlagen");
   };
 
   const votedCount = players.filter((p) => p.voted_for).length;
   const allVoted = players.length > 0 && votedCount === players.length;
 
   const goElimination = async () => {
+    if (!hostSecret) return;
     const max = Math.max(0, ...Object.values(voteTally));
     if (max === 0) return toast.error("Noch keine Stimmen");
     const top = Object.keys(voteTally).filter((id) => voteTally[id] === max);
     const chosen = top[Math.floor(Math.random() * top.length)];
-    await supabase
-      .from("rooms")
-      .update({ state: "elimination", eliminated_player_id: chosen })
-      .eq("id", room.id);
+    const { error } = await supabase.rpc("host_set_elimination", {
+      p_room_id: room.id, p_secret: hostSecret, p_eliminated: chosen,
+    });
+    if (error) rpcError(error, "Elimination fehlgeschlagen");
   };
+
 
   const eliminatedPlayer = players.find((p) => p.id === room.eliminated_player_id);
 
@@ -294,7 +298,9 @@ export default function Room() {
                   <Select
                     value={room.category}
                     onValueChange={async (v) => {
-                      const { error } = await supabase.from("rooms").update({ category: v }).eq("id", room.id);
+                      const { error } = await supabase.rpc("host_set_category", {
+                        p_room_id: room.id, p_secret: hostSecret!, p_category: v,
+                      });
                       if (error) toast.error("Update fehlgeschlagen");
                     }}
                   >
@@ -342,7 +348,7 @@ export default function Room() {
                     />
                     <span className="truncate">
                       {p.name}
-                      {p.client_id === clientId && (
+                      {p.id === storedPlayerId && (
                         <span style={{ color: "hsl(var(--game-secondary))" }}> · du</span>
                       )}
                     </span>
@@ -547,7 +553,7 @@ export default function Room() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {players.map((p) => {
-                  const isMe = p.client_id === clientId;
+                  const isMe = p.id === storedPlayerId;
                   const selected = me.voted_for === p.id;
                   return (
                     <button
