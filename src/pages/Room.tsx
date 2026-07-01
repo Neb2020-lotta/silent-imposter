@@ -553,7 +553,7 @@ export default function Room() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {players.map((p) => {
-                  const isMe = p.client_id === clientId;
+                  const isMe = p.id === storedPlayerId;
                   const selected = me.voted_for === p.id;
                   return (
                     <button
