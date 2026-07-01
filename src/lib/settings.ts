@@ -3,7 +3,7 @@ import type { Palette } from "./color";
 
 export type Difficulty = "easy" | "medium" | "hard";
 export type Language = "de" | "en";
-export type ThemeId = "ember" | "neon" | "royal";
+export type ThemeId = "ember" | "neon" | "royal" | "custom";
 
 export interface Settings {
   sounds: boolean;
