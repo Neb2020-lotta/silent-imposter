@@ -34,6 +34,7 @@ export const DEFAULT_SETTINGS: Settings = {
   categoryFilter: [],
   accentColor: null,
   palette: {},
+  customColors: [],
 };
 
 const KEY = "silent-imposter-settings";
