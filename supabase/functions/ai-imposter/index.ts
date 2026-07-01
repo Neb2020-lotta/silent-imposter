@@ -119,7 +119,7 @@ Jeder Spieler gibt pro Runde EINEN sehr kurzen Hinweis (max. 6 Wörter), der das
     });
   } catch (e) {
     console.error("ai-imposter error", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown" }), {
+    return new Response(JSON.stringify({ error: "internal_error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
