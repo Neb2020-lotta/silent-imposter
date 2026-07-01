@@ -42,6 +42,11 @@ const dict = {
     applyTo: "Anwenden auf",
     remove: "Entfernen",
     noCustomColors: "Noch keine eigenen Farben gespeichert.",
+    customTheme: "Eigenes Design",
+    saveCustomTheme: "Aktuelle Farben speichern",
+    updateCustomTheme: "Snapshot aktualisieren",
+    customThemeEmpty: "Speichere deine aktuellen Farben, um sie jederzeit wieder zu laden.",
+    customThemeSaved: "Eigenes Design gespeichert",
   },
   en: {
     settings: "Settings",
@@ -84,6 +89,11 @@ const dict = {
     applyTo: "Apply to",
     remove: "Remove",
     noCustomColors: "No custom colors saved yet.",
+    customTheme: "Custom theme",
+    saveCustomTheme: "Save current colors",
+    updateCustomTheme: "Update snapshot",
+    customThemeEmpty: "Save your current colors to reload them any time.",
+    customThemeSaved: "Custom theme saved",
   },
 } as const;
 

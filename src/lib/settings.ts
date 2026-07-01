@@ -3,7 +3,7 @@ import type { Palette } from "./color";
 
 export type Difficulty = "easy" | "medium" | "hard";
 export type Language = "de" | "en";
-export type ThemeId = "ember" | "neon" | "royal";
+export type ThemeId = "ember" | "neon" | "royal" | "custom";
 
 export interface Settings {
   sounds: boolean;
@@ -19,6 +19,8 @@ export interface Settings {
   accentColor: string | null;
   /** Per-slot color overrides (validated hex). Missing slot = theme default. */
   palette: Palette;
+  /** Persisted snapshot of the user's custom palette for the "Custom" theme preset. */
+  customTheme: Palette | null;
   /** User-saved custom color swatches (validated hex). */
   customColors: string[];
 }
@@ -34,6 +36,7 @@ export const DEFAULT_SETTINGS: Settings = {
   categoryFilter: [],
   accentColor: null,
   palette: {},
+  customTheme: null,
   customColors: [],
 };
 

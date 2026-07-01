@@ -147,7 +147,7 @@ export default function SettingsPage() {
         <Section>
           <div className="space-y-3">
             <Label mono="theme.skin">{t("theme")}</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {THEMES.map((th) => {
                 const active = s.theme === th.id;
                 return (
@@ -175,6 +175,7 @@ export default function SettingsPage() {
                   </button>
                 );
               })}
+              <CustomThemeCard />
             </div>
           </div>
         </Section>
@@ -749,4 +750,106 @@ function CustomColors() {
     </div>
   );
 }
+
+function CustomThemeCard() {
+  const s = useSettings();
+  const active = s.theme === "custom";
+  const hasSnapshot = !!s.customTheme && Object.keys(s.customTheme).length > 0;
+
+  const snapshotCurrent = () => {
+    // Snapshot current palette (falls back to legacy accent for back-compat).
+    const snap = { ...(s.palette ?? {}) };
+    if (s.accentColor && !snap.accent) snap.accent = s.accentColor;
+    updateSettings({ customTheme: snap, theme: "custom" });
+    sfx.click();
+    toast.success(t("customThemeSaved"));
+  };
+
+  const activate = () => {
+    if (!hasSnapshot) {
+      snapshotCurrent();
+      return;
+    }
+    updateSettings({
+      theme: "custom",
+      palette: { ...(s.customTheme ?? {}) },
+      accentColor: s.customTheme?.accent ?? null,
+    });
+    sfx.click();
+  };
+
+  const swatches: string[] = hasSnapshot
+    ? SLOT_ORDER
+        .map((slot) => s.customTheme?.[slot])
+        .filter((v): v is string => !!v && isValidHex(v))
+        .slice(0, 4)
+    : [];
+
+  return (
+    <div
+      className="p-3 text-left transition-colors flex flex-col gap-2"
+      style={{
+        fontFamily: mono,
+        borderRadius: 2,
+        border: `1px solid ${active ? "hsl(var(--game-accent))" : "hsl(var(--game-border))"}`,
+        background: active ? "hsla(var(--game-accent), 0.10)" : "transparent",
+        color: active ? "hsl(var(--game-accent))" : "hsl(var(--game-text))",
+      }}
+    >
+      <button
+        onClick={activate}
+        className="press-feedback text-left"
+        style={{ color: "inherit" }}
+      >
+        <div className="flex gap-1 mb-2 min-h-[18px]">
+          {swatches.length > 0 ? (
+            swatches.map((c, i) => (
+              <span
+                key={`${c}-${i}`}
+                style={{
+                  background: c,
+                  width: 18,
+                  height: 18,
+                  borderRadius: 2,
+                  display: "inline-block",
+                  border: "1px solid hsl(var(--game-text) / 0.3)",
+                }}
+              />
+            ))
+          ) : (
+            <span
+              className="text-[10px] uppercase tracking-widest"
+              style={{ color: "hsl(var(--game-secondary))" }}
+            >
+              — empty —
+            </span>
+          )}
+        </div>
+        <div className="text-[11px] uppercase tracking-widest">{t("customTheme")}</div>
+      </button>
+      <button
+        onClick={snapshotCurrent}
+        className="press-feedback text-[10px] uppercase tracking-widest px-2 py-1.5 self-start"
+        style={{
+          fontFamily: mono,
+          border: "1px solid hsl(var(--game-border))",
+          color: "hsl(var(--game-text))",
+          borderRadius: 2,
+        }}
+        title={t(hasSnapshot ? "updateCustomTheme" : "saveCustomTheme")}
+      >
+        {t(hasSnapshot ? "updateCustomTheme" : "saveCustomTheme")}
+      </button>
+      {!hasSnapshot && (
+        <p
+          className="text-[10px]"
+          style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
+        >
+          {t("customThemeEmpty")}
+        </p>
+      )}
+    </div>
+  );
+}
+
 
