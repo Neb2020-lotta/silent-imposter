@@ -1,4 +1,4 @@
-export type ThemeId = "ember" | "neon" | "royal";
+export type ThemeId = "ember" | "neon" | "royal" | "custom";
 
 export interface ThemeMeta {
   id: ThemeId;
