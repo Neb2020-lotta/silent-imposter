@@ -36,6 +36,7 @@ export const DEFAULT_SETTINGS: Settings = {
   categoryFilter: [],
   accentColor: null,
   palette: {},
+  customTheme: null,
   customColors: [],
 };
 
