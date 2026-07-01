@@ -108,6 +108,7 @@ export type Database = {
           eliminated_player_id: string | null
           hint: string | null
           host_id: string
+          host_secret: string
           id: string
           imposter_count: number
           starting_player_id: string | null
@@ -122,6 +123,7 @@ export type Database = {
           eliminated_player_id?: string | null
           hint?: string | null
           host_id: string
+          host_secret?: string
           id?: string
           imposter_count?: number
           starting_player_id?: string | null
@@ -136,6 +138,7 @@ export type Database = {
           eliminated_player_id?: string | null
           hint?: string | null
           host_id?: string
+          host_secret?: string
           id?: string
           imposter_count?: number
           starting_player_id?: string | null
@@ -149,7 +152,70 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      _require_host: {
+        Args: { p_room_id: string; p_secret: string }
+        Returns: undefined
+      }
+      create_room: {
+        Args: {
+          p_category: string
+          p_client_id: string
+          p_code: string
+          p_name: string
+        }
+        Returns: {
+          host_secret: string
+          player_id: string
+          room_id: string
+        }[]
+      }
+      host_new_round: {
+        Args: { p_room_id: string; p_secret: string }
+        Returns: undefined
+      }
+      host_set_category: {
+        Args: { p_category: string; p_room_id: string; p_secret: string }
+        Returns: undefined
+      }
+      host_set_elimination: {
+        Args: { p_eliminated: string; p_room_id: string; p_secret: string }
+        Returns: undefined
+      }
+      host_set_state: {
+        Args: { p_room_id: string; p_secret: string; p_state: string }
+        Returns: undefined
+      }
+      host_start_game: {
+        Args: {
+          p_hint: string
+          p_imposters: string[]
+          p_room_id: string
+          p_secret: string
+          p_starting: string
+          p_tips: string[]
+          p_word: string
+        }
+        Returns: undefined
+      }
+      join_room: {
+        Args: { p_client_id: string; p_code: string; p_name: string }
+        Returns: {
+          player_id: string
+          room_id: string
+        }[]
+      }
+      player_advance_turn: {
+        Args: { p_client_id: string; p_next_player: string; p_room_id: string }
+        Returns: undefined
+      }
+      player_cast_vote: {
+        Args: { p_client_id: string; p_room_id: string; p_target: string }
+        Returns: undefined
+      }
+      player_leave: {
+        Args: { p_client_id: string; p_room_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
