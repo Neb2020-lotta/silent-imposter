@@ -147,7 +147,7 @@ export default function SettingsPage() {
         <Section>
           <div className="space-y-3">
             <Label mono="theme.skin">{t("theme")}</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {THEMES.map((th) => {
                 const active = s.theme === th.id;
                 return (
@@ -175,6 +175,7 @@ export default function SettingsPage() {
                   </button>
                 );
               })}
+              <CustomThemeCard />
             </div>
           </div>
         </Section>
