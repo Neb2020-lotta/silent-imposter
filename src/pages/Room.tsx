@@ -298,7 +298,9 @@ export default function Room() {
                   <Select
                     value={room.category}
                     onValueChange={async (v) => {
-                      const { error } = await supabase.from("rooms").update({ category: v }).eq("id", room.id);
+                      const { error } = await supabase.rpc("host_set_category", {
+                        p_room_id: room.id, p_secret: hostSecret!, p_category: v,
+                      });
                       if (error) toast.error("Update fehlgeschlagen");
                     }}
                   >
