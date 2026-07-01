@@ -78,6 +78,12 @@ const dict = {
     slot_secondary: "Secondary",
     slot_border: "Border",
     slot_input: "Input field",
+    customColors: "Custom colors",
+    customColorsHint: "Save your favorite colors. Click one to apply it to a palette role.",
+    addCustomColor: "Add color",
+    applyTo: "Apply to",
+    remove: "Remove",
+    noCustomColors: "No custom colors saved yet.",
   },
 } as const;
 
