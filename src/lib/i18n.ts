@@ -89,6 +89,11 @@ const dict = {
     applyTo: "Apply to",
     remove: "Remove",
     noCustomColors: "No custom colors saved yet.",
+    customTheme: "Custom theme",
+    saveCustomTheme: "Save current colors",
+    updateCustomTheme: "Update snapshot",
+    customThemeEmpty: "Save your current colors to reload them any time.",
+    customThemeSaved: "Custom theme saved",
   },
 } as const;
 
