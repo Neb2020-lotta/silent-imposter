@@ -4,7 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, RotateCcw, Settings as Gear, Check } from "lucide-react";
+import { ArrowLeft, RotateCcw, Settings as Gear, Check, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   resetSettings,
