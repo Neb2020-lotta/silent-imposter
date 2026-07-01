@@ -19,6 +19,8 @@ export interface Settings {
   accentColor: string | null;
   /** Per-slot color overrides (validated hex). Missing slot = theme default. */
   palette: Palette;
+  /** User-saved custom color swatches (validated hex). */
+  customColors: string[];
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -32,6 +34,7 @@ export const DEFAULT_SETTINGS: Settings = {
   categoryFilter: [],
   accentColor: null,
   palette: {},
+  customColors: [],
 };
 
 const KEY = "silent-imposter-settings";

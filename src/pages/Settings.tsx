@@ -4,7 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, RotateCcw, Settings as Gear, Check } from "lucide-react";
+import { ArrowLeft, RotateCcw, Settings as Gear, Check, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   resetSettings,
@@ -187,6 +187,11 @@ export default function SettingsPage() {
         {/* Color palette */}
         <Section>
           <ColorPalette />
+        </Section>
+
+        {/* Custom colors */}
+        <Section>
+          <CustomColors />
         </Section>
 
         {/* Reset */}
@@ -513,25 +518,38 @@ function SlotPicker({
       <div className="flex items-center justify-between">
         <span
           className="text-[10px] uppercase tracking-widest"
-          style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
+          style={{ fontFamily: mono, color: "hsl(var(--game-text))", opacity: 0.75 }}
         >
           {t(labelKey)}
         </span>
         <code
           className="text-[10px]"
-          style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
+          style={{ fontFamily: mono, color: "hsl(var(--game-text))", opacity: 0.6 }}
         >
           {PALETTE_SLOTS[slot]}
         </code>
       </div>
       <div className="flex items-center gap-2">
-        <input
-          type="color"
-          aria-label={PALETTE_SLOTS[slot]}
-          value={swatch}
-          onChange={onNative}
-          className="h-9 w-10 cursor-pointer border bg-transparent shrink-0"
-        />
+        {/* Wrapper with checkerboard so the swatch stays visible even against matching bg */}
+        <div
+          className="relative h-9 w-10 shrink-0 overflow-hidden"
+          style={{
+            border: "1px solid hsl(var(--game-text) / 0.5)",
+            borderRadius: 2,
+            backgroundImage:
+              "linear-gradient(45deg, #888 25%, transparent 25%), linear-gradient(-45deg, #888 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #888 75%), linear-gradient(-45deg, transparent 75%, #888 75%)",
+            backgroundSize: "8px 8px",
+            backgroundPosition: "0 0, 0 4px, 4px -4px, -4px 0",
+          }}
+        >
+          <input
+            type="color"
+            aria-label={PALETTE_SLOTS[slot]}
+            value={swatch}
+            onChange={onNative}
+            className="absolute inset-0 h-full w-full cursor-pointer border-0 bg-transparent p-0"
+          />
+        </div>
         <Input
           value={draft}
           onChange={onText}
@@ -547,7 +565,7 @@ function SlotPicker({
         <button
           onClick={onReset}
           className="press-feedback text-[10px] uppercase tracking-widest px-2 py-2 shrink-0"
-          style={{ fontFamily: mono, border: "1px solid hsl(var(--game-border))", color: "hsl(var(--game-secondary))", borderRadius: 2 }}
+          style={{ fontFamily: mono, border: "1px solid hsl(var(--game-text) / 0.4)", color: "hsl(var(--game-text))", borderRadius: 2 }}
           title={t("resetColor")}
         >
           <RotateCcw className="h-3 w-3" />
@@ -557,6 +575,176 @@ function SlotPicker({
         <p className="text-[11px]" style={{ fontFamily: mono, color: "hsl(var(--destructive))" }} role="alert">
           {error}
         </p>
+      )}
+    </div>
+  );
+}
+
+function CustomColors() {
+  const s = useSettings();
+  const [draft, setDraft] = useState("#ffffff");
+  const [error, setError] = useState<string | null>(null);
+  const [openFor, setOpenFor] = useState<string | null>(null);
+
+  const add = () => {
+    const trimmed = draft.trim();
+    if (!HEX_COLOR_REGEX.test(trimmed)) {
+      setError(t("invalidColor"));
+      return;
+    }
+    const normalized = expandHex(trimmed).toLowerCase();
+    if (s.customColors.includes(normalized)) {
+      setError(null);
+      return;
+    }
+    updateSettings({ customColors: [...s.customColors, normalized] });
+    setError(null);
+    sfx.click();
+  };
+
+  const remove = (hex: string) => {
+    updateSettings({ customColors: s.customColors.filter((c) => c !== hex) });
+    if (openFor === hex) setOpenFor(null);
+    sfx.click();
+  };
+
+  const applyToSlot = (hex: string, slot: PaletteSlot) => {
+    const palette = { ...(s.palette ?? {}), [slot]: hex };
+    const patch: Partial<typeof s> = { palette };
+    if (slot === "accent") patch.accentColor = hex;
+    updateSettings(patch);
+    setOpenFor(null);
+    sfx.click();
+  };
+
+  return (
+    <div className="space-y-4">
+      <Label mono="ui.custom">{t("customColors")}</Label>
+      <p className="text-[11px]" style={{ fontFamily: mono, color: "hsl(var(--game-text))", opacity: 0.7 }}>
+        {t("customColorsHint")}
+      </p>
+
+      <div className="flex items-center gap-2">
+        <div
+          className="relative h-9 w-10 shrink-0 overflow-hidden"
+          style={{
+            border: "1px solid hsl(var(--game-text) / 0.5)",
+            borderRadius: 2,
+            backgroundImage:
+              "linear-gradient(45deg, #888 25%, transparent 25%), linear-gradient(-45deg, #888 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #888 75%), linear-gradient(-45deg, transparent 75%, #888 75%)",
+            backgroundSize: "8px 8px",
+            backgroundPosition: "0 0, 0 4px, 4px -4px, -4px 0",
+          }}
+        >
+          <input
+            type="color"
+            aria-label={t("addCustomColor")}
+            value={isValidHex(draft) ? expandHex(draft) : "#ffffff"}
+            onChange={(e) => { setDraft(e.target.value); setError(null); }}
+            className="absolute inset-0 h-full w-full cursor-pointer border-0 bg-transparent p-0"
+          />
+        </div>
+        <Input
+          value={draft}
+          onChange={(e) => { setDraft(e.target.value); if (e.target.value === "" || isValidHex(e.target.value)) setError(null); }}
+          onKeyDown={(e) => { if (e.key === "Enter") add(); }}
+          placeholder="#RRGGBB"
+          maxLength={7}
+          spellCheck={false}
+          aria-invalid={!!error}
+          className="term-input uppercase flex-1 min-w-0"
+          style={{ fontFamily: mono }}
+        />
+        <button
+          onClick={add}
+          className="press-feedback inline-flex items-center gap-1 text-[10px] uppercase tracking-widest px-3 py-2 shrink-0"
+          style={{ fontFamily: mono, border: "1px solid hsl(var(--game-accent))", color: "hsl(var(--game-accent))", borderRadius: 2 }}
+        >
+          <Plus className="h-3 w-3" /> {t("addCustomColor")}
+        </button>
+      </div>
+      {error && (
+        <p className="text-[11px]" style={{ fontFamily: mono, color: "hsl(var(--destructive))" }} role="alert">
+          {error}
+        </p>
+      )}
+
+      {s.customColors.length === 0 ? (
+        <p className="text-[11px]" style={{ fontFamily: mono, color: "hsl(var(--game-text))", opacity: 0.6 }}>
+          {t("noCustomColors")}
+        </p>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {s.customColors.map((hex) => (
+            <div key={hex} className="relative">
+              <button
+                onClick={() => setOpenFor(openFor === hex ? null : hex)}
+                className="press-feedback inline-flex items-center gap-2 px-2 py-1 text-[10px] uppercase tracking-widest"
+                style={{
+                  fontFamily: mono,
+                  border: "1px solid hsl(var(--game-text) / 0.4)",
+                  borderRadius: 2,
+                  color: "hsl(var(--game-text))",
+                  background: "hsl(var(--game-input-bg))",
+                }}
+                title={t("applyTo")}
+              >
+                <span
+                  className="inline-block"
+                  style={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: 2,
+                    background: hex,
+                    border: "1px solid hsl(var(--game-text) / 0.5)",
+                  }}
+                />
+                {hex}
+                <span
+                  role="button"
+                  aria-label={t("remove")}
+                  onClick={(e) => { e.stopPropagation(); remove(hex); }}
+                  className="ml-1 inline-flex items-center justify-center"
+                  style={{ color: "hsl(var(--game-text))" }}
+                >
+                  <X className="h-3 w-3" />
+                </span>
+              </button>
+              {openFor === hex && (
+                <div
+                  className="absolute z-10 mt-1 p-2 space-y-1"
+                  style={{
+                    background: "hsl(var(--game-card-bg))",
+                    border: "1px solid hsl(var(--game-accent))",
+                    borderRadius: 2,
+                    minWidth: 180,
+                  }}
+                >
+                  <div
+                    className="text-[10px] uppercase tracking-widest pb-1"
+                    style={{ fontFamily: mono, color: "hsl(var(--game-text))", opacity: 0.7 }}
+                  >
+                    {t("applyTo")}
+                  </div>
+                  {SLOT_ORDER.map((slot) => (
+                    <button
+                      key={slot}
+                      onClick={() => applyToSlot(hex, slot)}
+                      className="press-feedback block w-full text-left px-2 py-1 text-[11px]"
+                      style={{
+                        fontFamily: mono,
+                        color: "hsl(var(--game-text))",
+                        borderRadius: 2,
+                      }}
+                    >
+                      {t(`slot_${slot}` as const)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
