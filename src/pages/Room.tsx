@@ -348,7 +348,7 @@ export default function Room() {
                     />
                     <span className="truncate">
                       {p.name}
-                      {p.client_id === clientId && (
+                      {p.id === storedPlayerId && (
                         <span style={{ color: "hsl(var(--game-secondary))" }}> · du</span>
                       )}
                     </span>
