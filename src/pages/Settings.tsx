@@ -189,6 +189,11 @@ export default function SettingsPage() {
           <ColorPalette />
         </Section>
 
+        {/* Custom colors */}
+        <Section>
+          <CustomColors />
+        </Section>
+
         {/* Reset */}
         <Button
           onClick={handleReset}
