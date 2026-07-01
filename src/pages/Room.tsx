@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { getClientId } from "@/lib/clientId";
+import { getHostSecret, getPlayerId, clearHostSecret, clearPlayerId } from "@/lib/roomAuth";
 import { pickRandomWord, wordCategories } from "@/lib/words";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ChatPanel from "@/components/ChatPanel";
@@ -11,6 +12,7 @@ import { toast } from "sonner";
 type Room = Tables<"rooms">;
 type Player = Tables<"players">;
 type Message = Tables<"messages">;
+
 
 const HINTS_REQUIRED = 1;
 
