@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { wordCategories, generateRoomCode } from "@/lib/words";
 import { getClientId, getStoredName, setStoredName } from "@/lib/clientId";
+import { setHostSecret, setPlayerId } from "@/lib/roomAuth";
 import { toast } from "sonner";
 import { Settings as Gear } from "lucide-react";
 import { sfx } from "@/lib/sounds";
@@ -28,35 +29,31 @@ export default function Home() {
       const clientId = getClientId();
       let roomCode = "";
       let roomId: string | null = null;
-      let lastError: unknown = null;
+      let hostSecret: string | null = null;
+      let playerId: string | null = null;
       for (let i = 0; i < 5 && !roomId; i++) {
         roomCode = generateRoomCode();
-        const { data, error } = await supabase
-          .from("rooms")
-          .insert({ code: roomCode, host_id: clientId, category, imposter_count: 1 })
-          .select("id")
-          .single();
-        if (!error && data) roomId = data.id;
-        else lastError = error;
+        const { data, error } = await supabase.rpc("create_room", {
+          p_code: roomCode,
+          p_client_id: clientId,
+          p_category: category,
+          p_name: name.trim(),
+        });
+        if (!error && data && data.length > 0) {
+          roomId = (data[0] as { room_id: string }).room_id;
+          hostSecret = (data[0] as { host_secret: string }).host_secret;
+          playerId = (data[0] as { player_id: string }).player_id;
+        } else if (error) {
+          console.error("create_room failed:", error);
+        }
       }
-      if (!roomId) {
-        console.error("Room creation failed:", lastError);
+      if (!roomId || !hostSecret || !playerId) {
         toast.error("Raum konnte nicht erstellt werden");
         setBusy(false);
         return;
       }
-      const { error: pErr } = await supabase.from("players").insert({
-        room_id: roomId,
-        client_id: clientId,
-        name: name.trim(),
-        is_host: true,
-      });
-      if (pErr) {
-        console.error("Player insert failed:", pErr);
-        toast.error("Beitritt fehlgeschlagen. Bitte versuche es erneut.");
-        setBusy(false);
-        return;
-      }
+      setHostSecret(roomId, hostSecret);
+      setPlayerId(roomId, playerId);
       navigate(`/room/${roomCode}`);
     } catch (e) {
       console.error(e);
@@ -71,38 +68,23 @@ export default function Home() {
     setBusy(true);
     setStoredName(name.trim());
     const upper = code.trim().toUpperCase();
-    const { data: room, error } = await supabase
-      .from("rooms")
-      .select("id, state")
-      .eq("code", upper)
-      .maybeSingle();
-    if (error || !room) {
-      setBusy(false);
-      return toast.error("Raum nicht gefunden");
-    }
-    if (room.state !== "lobby") {
-      setBusy(false);
-      return toast.error("Das Spiel hat bereits begonnen");
-    }
     const clientId = getClientId();
-    const { data: existing } = await supabase
-      .from("players")
-      .select("id")
-      .eq("room_id", room.id)
-      .eq("client_id", clientId)
-      .maybeSingle();
-    if (!existing) {
-      const { error: insErr } = await supabase.from("players").insert({
-        room_id: room.id,
-        client_id: clientId,
-        name: name.trim(),
-        is_host: false,
-      });
-      if (insErr) {
-        setBusy(false);
-        return toast.error("Beitritt fehlgeschlagen");
-      }
+    const { data, error } = await supabase.rpc("join_room", {
+      p_code: upper,
+      p_client_id: clientId,
+      p_name: name.trim(),
+    });
+    if (error || !data || data.length === 0) {
+      setBusy(false);
+      const msg = error?.message ?? "";
+      if (msg.includes("not_found")) return toast.error("Raum nicht gefunden");
+      if (msg.includes("already_started")) return toast.error("Das Spiel hat bereits begonnen");
+      if (msg.includes("invalid_name")) return toast.error("Ungültiger Name");
+      console.error("join_room failed:", error);
+      return toast.error("Beitritt fehlgeschlagen");
     }
+    const row = data[0] as { room_id: string; player_id: string };
+    setPlayerId(row.room_id, row.player_id);
     navigate(`/room/${upper}`);
   };
 
