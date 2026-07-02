@@ -264,64 +264,22 @@ export default function Local() {
                 Stelle sicher, dass nur du auf den Bildschirm schaust.
               </p>
 
-              {!showCard ? (
-                <Primary onClick={() => { sfx.cardReveal(); setShowCard(true); }}>🙈 Karte aufdecken</Primary>
-              ) : (
-                <>
-                  <div
-                    key={revealIdx}
-                    className={`p-8 space-y-3 animate-flip ${players[revealIdx].isImposter ? "animate-imposter-glow" : ""}`}
-                    style={{
-                      background: "hsl(var(--game-card-bg))",
-                      border: "1px solid hsl(var(--game-border))",
-                      borderRadius: 2,
-                    }}
-                  >
-                    {players[revealIdx].isImposter ? (
-                      <>
-                        <p
-                          className="text-xs uppercase tracking-widest"
-                          style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
-                        >
-                          Du bist
-                        </p>
-                        <p
-                          className="text-4xl font-bold uppercase"
-                          style={{ fontFamily: mono, color: "hsl(var(--game-accent))" }}
-                        >
-                          Imposter
-                        </p>
-                        <p className="text-sm opacity-80" style={{ fontFamily: rubik }}>
-                          Tipp:{" "}
-                          <em style={{ color: "hsl(var(--game-accent))" }}>
-                            "{players[revealIdx].tip}"
-                          </em>
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <p
-                          className="text-xs uppercase tracking-widest"
-                          style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
-                        >
-                          Dein Wort
-                        </p>
-                        <p
-                          className="text-4xl font-bold"
-                          style={{ fontFamily: mono, color: "hsl(var(--game-accent))" }}
-                        >
-                          {word}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                  <Primary onClick={nextReveal}>
-                    {revealIdx + 1 >= players.length ? "Fertig" : "Verbergen & weitergeben"}
-                  </Primary>
-                </>
-              )}
+              <RoleCard
+                key={revealIdx}
+                name={players[revealIdx].name}
+                isImposter={players[revealIdx].isImposter}
+                word={word}
+                tip={players[revealIdx].tip}
+                category={category !== "Alle Wörter" ? category : undefined}
+                onReveal={() => sfx.cardReveal()}
+              />
+
+              <Primary onClick={nextReveal}>
+                {revealIdx + 1 >= players.length ? "Fertig" : "Weitergeben"}
+              </Primary>
             </div>
           )}
+
 
           {/* DISCUSSION — verbal only */}
           {phase === "discussion" && (
