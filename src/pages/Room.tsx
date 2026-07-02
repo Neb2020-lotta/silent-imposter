@@ -7,6 +7,7 @@ import { getHostSecret, getPlayerId, clearHostSecret, clearPlayerId } from "@/li
 import { pickRandomWord, wordCategories } from "@/lib/words";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ChatPanel from "@/components/ChatPanel";
+import { RoleCard } from "@/components/RoleCard";
 import { toast } from "sonner";
 
 type Room = Tables<"rooms">;
