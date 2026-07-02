@@ -33,6 +33,7 @@ export function RoleCard({
   allowHide = false,
   onHide,
   initialRevealed = false,
+  onReveal,
 }: RoleCardProps) {
   const { animations } = useSettings();
   const [revealed, setRevealed] = useState(initialRevealed);
@@ -49,7 +50,7 @@ export function RoleCard({
       {!revealed ? (
         <button
           type="button"
-          onClick={() => setRevealed(true)}
+          onClick={() => { setRevealed(true); onReveal?.(); }}
           className="group relative w-full press-feedback overflow-hidden"
           style={{
             background:
