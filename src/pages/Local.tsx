@@ -12,6 +12,7 @@ import {
 import { wordCategories, pickRandomWord } from "@/lib/words";
 import { toast } from "sonner";
 import { sfx } from "@/lib/sounds";
+import { RoleCard } from "@/components/RoleCard";
 
 type Phase = "setup" | "reveal" | "discussion" | "voting" | "result";
 
