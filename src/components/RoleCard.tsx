@@ -17,6 +17,8 @@ interface RoleCardProps {
   initialRevealed?: boolean;
   /** Fired when user reveals the card. */
   onReveal?: () => void;
+}
+
 
 /**
  * Shared, polished role/word reveal card used in Room, Local, and AIMode.
