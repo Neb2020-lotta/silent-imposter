@@ -201,28 +201,13 @@ export default function AIMode() {
 
         {phase === "reveal" && me && secretWord && (
           <Card>
-            <p className="text-xs uppercase tracking-widest mb-3" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
-              Deine Rolle
-            </p>
-            {me.isImposter ? (
-              <>
-                <h2 className="text-3xl font-bold mb-2" style={{ fontFamily: mono, color: "hsl(var(--game-accent))" }}>
-                  IMPOSTER
-                </h2>
-                <p style={{ fontFamily: rubik }}>
-                  Du kennst das Wort NICHT. Allgemeiner Tipp:
-                </p>
-                <p className="mt-2 text-xl font-bold" style={{ fontFamily: mono }}>„{secretWord.hint}"</p>
-              </>
-            ) : (
-              <>
-                <h2 className="text-3xl font-bold mb-2" style={{ fontFamily: mono }}>CREWMATE</h2>
-                <p style={{ fontFamily: rubik }}>Das geheime Wort ist:</p>
-                <p className="mt-2 text-3xl font-bold" style={{ fontFamily: mono, color: "hsl(var(--game-accent))" }}>
-                  {secretWord.word}
-                </p>
-              </>
-            )}
+            <RoleCard
+              name={me.name}
+              isImposter={me.isImposter}
+              word={secretWord.word}
+              tip={secretWord.hint}
+              category={category}
+            />
             <div className="mt-6">
               <PrimaryButton onClick={beginPlay}>Los geht's</PrimaryButton>
             </div>
