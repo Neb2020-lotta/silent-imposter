@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Bot, User, ArrowLeft, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RoleCard } from "@/components/RoleCard";
 
 const mono = "'Space Mono', monospace";
 const rubik = "'Rubik', sans-serif";
