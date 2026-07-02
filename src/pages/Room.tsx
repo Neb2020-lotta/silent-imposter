@@ -7,6 +7,7 @@ import { getHostSecret, getPlayerId, clearHostSecret, clearPlayerId } from "@/li
 import { pickRandomWord, wordCategories } from "@/lib/words";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ChatPanel from "@/components/ChatPanel";
+import { RoleCard } from "@/components/RoleCard";
 import { toast } from "sonner";
 
 type Room = Tables<"rooms">;
@@ -383,63 +384,13 @@ export default function Room() {
                 <h2 className="text-2xl term-sans font-medium mt-2">Hi {me.name}</h2>
               </div>
 
-              {!showWord ? (
-                <>
-                  <p className="term-sans text-sm" style={{ color: "hsl(var(--game-secondary))" }}>
-                    Stelle sicher, dass niemand mitliest.
-                  </p>
-                  <button
-                    onClick={() => setShowWord(true)}
-                    className="term-btn term-btn-primary w-full py-4"
-                  >
-                    ▶ Karte aufdecken
-                  </button>
-                </>
-              ) : (
-                <div
-                  className="p-6 space-y-3"
-                  style={{
-                    background: "hsl(var(--game-input-bg))",
-                    border: "1px solid hsl(var(--game-accent))",
-                    borderRadius: 2,
-                  }}
-                >
-                  {me.is_imposter ? (
-                    <>
-                      <p className="term-tag">// du bist</p>
-                      <p
-                        className="text-4xl font-bold uppercase term-mono"
-                        style={{ color: "hsl(var(--game-accent))" }}
-                      >
-                        Imposter
-                      </p>
-                      <p className="term-sans text-sm pt-2">
-                        Tipp:{" "}
-                        <em style={{ color: "hsl(var(--game-accent))" }}>"{me.imposter_tip}"</em>
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="term-tag">// dein wort</p>
-                      <p
-                        className="text-4xl font-bold term-mono"
-                        style={{ color: "hsl(var(--game-accent))" }}
-                      >
-                        {me.word}
-                      </p>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {showWord && (
-                <button
-                  onClick={() => setShowWord(false)}
-                  className="term-btn term-btn-ghost w-full"
-                >
-                  Verbergen
-                </button>
-              )}
+              <RoleCard
+                name={me.name}
+                isImposter={me.is_imposter}
+                word={me.word ?? undefined}
+                tip={me.imposter_tip ?? undefined}
+                category={room.category ?? undefined}
+              />
 
               {isHost ? (
                 <button onClick={goDiscussion} className="term-btn term-btn-primary w-full py-4">
