@@ -164,11 +164,6 @@ export default function Room() {
   const allHintsGiven =
     players.length > 0 && players.every((p) => (hintCounts[p.id] || 0) >= HINTS_REQUIRED);
 
-  const voteTally = useMemo(() => {
-    const t: Record<string, number> = {};
-    for (const p of players) if (p.voted_for) t[p.voted_for] = (t[p.voted_for] || 0) + 1;
-    return t;
-  }, [players]);
 
   if (!room) {
     return (
