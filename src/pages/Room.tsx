@@ -589,7 +589,7 @@ export default function Room() {
                 })}
               </div>
 
-              {me.voted_for && (
+              {myRole?.voted_for && (
                 <p className="term-tag block text-center" style={{ color: "hsl(var(--game-accent))" }}>
                   // stimme gespeichert · änderbar
                 </p>
