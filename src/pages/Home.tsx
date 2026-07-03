@@ -263,9 +263,21 @@ export default function Home() {
             className="flex items-center space-x-3 pt-4 border-t"
             style={{ borderColor: "hsl(var(--game-card-bg))" }}
           >
-            <div
-              className="h-2 w-2 rounded-full animate-pulse"
-              style={{ background: "hsl(var(--game-accent))" }}
+            <button
+              onClick={() => {
+                sfx.click();
+                const next = dotClicks + 1;
+                if (next >= 3) {
+                  setDotClicks(0);
+                  setDevPrompt(true);
+                } else {
+                  setDotClicks(next);
+                  setTimeout(() => setDotClicks((c) => (c === next ? 0 : c)), 1500);
+                }
+              }}
+              aria-label="System status"
+              className="h-3 w-3 rounded-full animate-pulse cursor-pointer"
+              style={{ background: "hsl(var(--game-accent))", border: "none", padding: 0 }}
             />
             <span
               className="text-[10px] uppercase tracking-tighter"
@@ -276,9 +288,114 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      {devPrompt && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-6"
+          style={{ background: "rgba(0,0,0,0.75)" }}
+          onClick={() => { setDevPrompt(false); setDevInput(""); }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm p-6 space-y-4"
+            style={{
+              background: "hsl(var(--game-card-bg))",
+              border: "1px solid hsl(var(--game-border))",
+              borderRadius: 2,
+            }}
+          >
+            <p className="text-xs uppercase tracking-widest" style={{ fontFamily: mono, color: "hsl(var(--game-accent))" }}>
+              // Access code
+            </p>
+            <Input
+              autoFocus
+              value={devInput}
+              onChange={(e) => setDevInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  if (devInput.trim().toLowerCase() === "hallo") {
+                    setDevPrompt(false);
+                    setDevInput("");
+                    setDevOpen(true);
+                  } else {
+                    toast.error("Falscher Code");
+                    setDevInput("");
+                  }
+                }
+              }}
+              placeholder="???"
+              style={inputStyle}
+            />
+            <p className="text-[10px]" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
+              Enter zum bestätigen
+            </p>
+          </div>
+        </div>
+      )}
+
+      {devOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-6"
+          style={{ background: "rgba(0,0,0,0.85)" }}
+          onClick={() => setDevOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md p-6 space-y-4"
+            style={{
+              background: "hsl(var(--game-card-bg))",
+              border: "1px solid hsl(var(--game-accent))",
+              borderRadius: 2,
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-widest" style={{ fontFamily: mono, color: "hsl(var(--game-accent))" }}>
+                // Dev Menu
+              </p>
+              <button
+                onClick={() => setDevOpen(false)}
+                className="text-xs uppercase"
+                style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="grid gap-2">
+              <DevItem label="Gegen KI spielen" onClick={() => { setDevOpen(false); navigate("/ai"); }} />
+              <DevItem label="Wie spielt man?" onClick={() => { setDevOpen(false); navigate("/instructions"); }} />
+              <DevItem label="Lokal spielen" onClick={() => { setDevOpen(false); navigate("/local"); }} />
+              <DevItem label="Einstellungen" onClick={() => { setDevOpen(false); navigate("/settings"); }} />
+            </div>
+            <p className="text-[10px]" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
+              Versteckte Routen & Debug-Zugänge
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+function DevItem({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={() => { sfx.click(); onClick(); }}
+      className="w-full text-left px-4 py-3 text-sm transition-colors"
+      style={{
+        fontFamily: "'Rubik', sans-serif",
+        background: "transparent",
+        border: "1px solid hsl(var(--game-border))",
+        color: "hsl(var(--game-text))",
+        borderRadius: 2,
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "hsl(var(--game-accent))"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "hsl(var(--game-border))"; }}
+    >
+      {label}
+    </button>
+  );
+}
+
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
