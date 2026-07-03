@@ -10,6 +10,8 @@ import { setHostSecret, setPlayerId } from "@/lib/roomAuth";
 import { toast } from "sonner";
 import { Settings as Gear } from "lucide-react";
 import { sfx } from "@/lib/sounds";
+import BanManager from "@/components/BanManager";
+
 
 type Mode = "menu" | "host" | "join";
 
@@ -24,6 +26,8 @@ export default function Home() {
   const [devPrompt, setDevPrompt] = useState(false);
   const [devInput, setDevInput] = useState("");
   const [devOpen, setDevOpen] = useState(false);
+  const [banManagerOpen, setBanManagerOpen] = useState(false);
+
 
 
   const createRoom = async () => {
@@ -361,6 +365,7 @@ export default function Home() {
               </button>
             </div>
             <div className="grid gap-2">
+              <DevItem label="Ban Management (IP)" onClick={() => { setDevOpen(false); setBanManagerOpen(true); }} />
               <DevItem label="Gegen KI spielen" onClick={() => { setDevOpen(false); navigate("/ai"); }} />
               <DevItem label="Wie spielt man?" onClick={() => { setDevOpen(false); navigate("/instructions"); }} />
               <DevItem label="Lokal spielen" onClick={() => { setDevOpen(false); navigate("/local"); }} />
@@ -372,9 +377,12 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {banManagerOpen && <BanManager onClose={() => setBanManagerOpen(false)} />}
     </div>
   );
 }
+
 
 function DevItem({ label, onClick }: { label: string; onClick: () => void }) {
   return (
