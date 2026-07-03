@@ -436,9 +436,9 @@ export default function Room() {
 
               <RoleCard
                 name={me.name}
-                isImposter={me.is_imposter}
-                word={me.word ?? undefined}
-                tip={me.imposter_tip ?? undefined}
+                isImposter={myRole?.is_imposter ?? false}
+                word={myRole?.word ?? undefined}
+                tip={myRole?.imposter_tip ?? undefined}
                 category={room.category ?? undefined}
               />
 
