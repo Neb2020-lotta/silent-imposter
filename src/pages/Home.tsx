@@ -187,17 +187,8 @@ export default function Home() {
                 tag="Pass & Play · 1 Gerät"
                 onClick={() => navigate("/local")}
               />
-              <ActionCard
-                title="Gegen KI spielen"
-                tag="Neural Net · Singleplayer"
-                onClick={() => navigate("/ai")}
-              />
-              <ActionCard
-                title="Wie spielt man?"
-                tag="Anleitung · ❓"
-                onClick={() => navigate("/instructions")}
-              />
             </div>
+
           )}
 
           {mode !== "menu" && (
