@@ -52,48 +52,104 @@ export type Database = {
           },
         ]
       }
-      players: {
+      player_secrets: {
         Row: {
           client_id: string
-          id: string
           imposter_tip: string | null
-          is_host: boolean
           is_imposter: boolean
-          joined_at: string
-          name: string
+          player_id: string
           room_id: string
           voted_for: string | null
           word: string | null
         }
         Insert: {
           client_id: string
-          id?: string
           imposter_tip?: string | null
-          is_host?: boolean
           is_imposter?: boolean
-          joined_at?: string
-          name: string
+          player_id: string
           room_id: string
           voted_for?: string | null
           word?: string | null
         }
         Update: {
           client_id?: string
-          id?: string
           imposter_tip?: string | null
-          is_host?: boolean
           is_imposter?: boolean
-          joined_at?: string
-          name?: string
+          player_id?: string
           room_id?: string
           voted_for?: string | null
           word?: string | null
         }
         Relationships: [
           {
+            foreignKeyName: "player_secrets_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_secrets_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      players: {
+        Row: {
+          id: string
+          is_host: boolean
+          joined_at: string
+          name: string
+          room_id: string
+        }
+        Insert: {
+          id?: string
+          is_host?: boolean
+          joined_at?: string
+          name: string
+          room_id: string
+        }
+        Update: {
+          id?: string
+          is_host?: boolean
+          joined_at?: string
+          name?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
             foreignKeyName: "players_room_id_fkey"
             columns: ["room_id"]
             isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_secrets: {
+        Row: {
+          host_id: string
+          host_secret: string
+          room_id: string
+        }
+        Insert: {
+          host_id: string
+          host_secret?: string
+          room_id: string
+        }
+        Update: {
+          host_id?: string
+          host_secret?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_secrets_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: true
             referencedRelation: "rooms"
             referencedColumns: ["id"]
           },
@@ -107,8 +163,6 @@ export type Database = {
           current_turn_player_id: string | null
           eliminated_player_id: string | null
           hint: string | null
-          host_id: string
-          host_secret: string
           id: string
           imposter_count: number
           starting_player_id: string | null
@@ -122,8 +176,6 @@ export type Database = {
           current_turn_player_id?: string | null
           eliminated_player_id?: string | null
           hint?: string | null
-          host_id: string
-          host_secret?: string
           id?: string
           imposter_count?: number
           starting_player_id?: string | null
@@ -137,8 +189,6 @@ export type Database = {
           current_turn_player_id?: string | null
           eliminated_player_id?: string | null
           hint?: string | null
-          host_id?: string
-          host_secret?: string
           id?: string
           imposter_count?: number
           starting_player_id?: string | null
@@ -169,6 +219,25 @@ export type Database = {
           room_id: string
         }[]
       }
+      get_imposters: { Args: { p_room_id: string }; Returns: string[] }
+      get_my_role: {
+        Args: { p_client_id: string; p_room_id: string }
+        Returns: {
+          imposter_tip: string
+          is_imposter: boolean
+          player_id: string
+          voted_for: string
+          word: string
+        }[]
+      }
+      get_vote_tally: {
+        Args: { p_room_id: string }
+        Returns: {
+          target_id: string
+          votes: number
+        }[]
+      }
+      get_voted_count: { Args: { p_room_id: string }; Returns: number }
       host_new_round: {
         Args: { p_room_id: string; p_secret: string }
         Returns: undefined

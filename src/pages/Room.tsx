@@ -24,6 +24,15 @@ export default function Room() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [showWord, setShowWord] = useState(false);
+  const [myRole, setMyRole] = useState<{
+    is_imposter: boolean;
+    word: string | null;
+    imposter_tip: string | null;
+    voted_for: string | null;
+  } | null>(null);
+  const [voteTally, setVoteTally] = useState<Record<string, number>>({});
+  const [votedCount, setVotedCount] = useState(0);
+  const [imposterIds, setImposterIds] = useState<string[]>([]);
   const clientId = getClientId();
 
   useEffect(() => {
@@ -62,8 +71,49 @@ export default function Room() {
       const { data } = await supabase.from("messages").select("*").eq("room_id", room.id);
       if (data) setMessages(data);
     };
+    const loadMyRole = async () => {
+      const { data } = await supabase.rpc("get_my_role", {
+        p_room_id: room.id,
+        p_client_id: clientId,
+      });
+      if (data && data.length > 0) {
+        const r = data[0];
+        setMyRole({
+          is_imposter: r.is_imposter,
+          word: r.word,
+          imposter_tip: r.imposter_tip,
+          voted_for: r.voted_for,
+        });
+      } else {
+        setMyRole(null);
+      }
+    };
+    const loadVotes = async () => {
+      const [{ data: tally }, { data: total }] = await Promise.all([
+        supabase.rpc("get_vote_tally", { p_room_id: room.id }),
+        supabase.rpc("get_voted_count", { p_room_id: room.id }),
+      ]);
+      const t: Record<string, number> = {};
+      (tally ?? []).forEach((row: { target_id: string; votes: number }) => {
+        t[row.target_id] = Number(row.votes);
+      });
+      setVoteTally(t);
+      setVotedCount(typeof total === "number" ? total : 0);
+    };
+    const loadImposters = async () => {
+      if (room.state !== "reveal") {
+        setImposterIds([]);
+        return;
+      }
+      const { data } = await supabase.rpc("get_imposters", { p_room_id: room.id });
+      setImposterIds((data as string[] | null) ?? []);
+    };
+
     loadPlayers();
     loadMessages();
+    loadMyRole();
+    loadVotes();
+    loadImposters();
 
     const channel = supabase
       .channel(`room:${room.id}`)
@@ -73,12 +123,18 @@ export default function Room() {
         (payload) => {
           if (payload.eventType === "UPDATE") setRoom(payload.new as Room);
           if (payload.eventType === "DELETE") navigate("/");
+          loadVotes();
+          loadMyRole();
+          loadImposters();
         }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "players", filter: `room_id=eq.${room.id}` },
-        () => loadPlayers()
+        () => {
+          loadPlayers();
+          loadMyRole();
+        }
       )
       .on(
         "postgres_changes",
@@ -90,7 +146,7 @@ export default function Room() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [room?.id, navigate]);
+  }, [room?.id, room?.state, navigate, clientId]);
 
   useEffect(() => {
     if (room?.state === "lobby") setShowWord(false);
@@ -108,11 +164,6 @@ export default function Room() {
   const allHintsGiven =
     players.length > 0 && players.every((p) => (hintCounts[p.id] || 0) >= HINTS_REQUIRED);
 
-  const voteTally = useMemo(() => {
-    const t: Record<string, number> = {};
-    for (const p of players) if (p.voted_for) t[p.voted_for] = (t[p.voted_for] || 0) + 1;
-    return t;
-  }, [players]);
 
   if (!room) {
     return (
@@ -232,7 +283,6 @@ export default function Room() {
     if (error) rpcError(error, "Zug-Wechsel fehlgeschlagen");
   };
 
-  const votedCount = players.filter((p) => p.voted_for).length;
   const allVoted = players.length > 0 && votedCount === players.length;
 
   const goElimination = async () => {
@@ -386,9 +436,9 @@ export default function Room() {
 
               <RoleCard
                 name={me.name}
-                isImposter={me.is_imposter}
-                word={me.word ?? undefined}
-                tip={me.imposter_tip ?? undefined}
+                isImposter={myRole?.is_imposter ?? false}
+                word={myRole?.word ?? undefined}
+                tip={myRole?.imposter_tip ?? undefined}
                 category={room.category ?? undefined}
               />
 
@@ -505,7 +555,7 @@ export default function Room() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {players.map((p) => {
                   const isMe = p.id === storedPlayerId;
-                  const selected = me.voted_for === p.id;
+                  const selected = myRole?.voted_for === p.id;
                   return (
                     <button
                       key={p.id}
@@ -539,7 +589,7 @@ export default function Room() {
                 })}
               </div>
 
-              {me.voted_for && (
+              {myRole?.voted_for && (
                 <p className="term-tag block text-center" style={{ color: "hsl(var(--game-accent))" }}>
                   // stimme gespeichert · änderbar
                 </p>
@@ -618,20 +668,21 @@ export default function Room() {
                   .sort((a, b) => (voteTally[b.id] || 0) - (voteTally[a.id] || 0))
                   .map((p) => {
                     const votes = voteTally[p.id] || 0;
+                    const isImp = imposterIds.includes(p.id);
                     return (
                       <div
                         key={p.id}
                         className="flex justify-between items-center px-3 py-2 text-sm term-sans"
                         style={{
-                          background: p.is_imposter
+                          background: isImp
                             ? "hsla(var(--game-accent), 0.12)"
                             : "hsl(var(--game-input-bg))",
-                          border: `1px solid ${p.is_imposter ? "hsl(var(--game-accent))" : "hsl(var(--game-border))"}`,
+                          border: `1px solid ${isImp ? "hsl(var(--game-accent))" : "hsl(var(--game-border))"}`,
                           borderRadius: 2,
                         }}
                       >
-                        <span style={{ color: p.is_imposter ? "hsl(var(--game-accent))" : "hsl(var(--game-text))" }}>
-                          {p.is_imposter && "▶ "}
+                        <span style={{ color: isImp ? "hsl(var(--game-accent))" : "hsl(var(--game-text))" }}>
+                          {isImp && "▶ "}
                           {p.name}
                         </span>
                         <span className="term-mono text-xs" style={{ color: "hsl(var(--game-secondary))" }}>
@@ -646,7 +697,7 @@ export default function Room() {
                 <p className="term-tag">// imposter waren</p>
                 <div className="flex flex-wrap gap-2">
                   {players
-                    .filter((p) => p.is_imposter)
+                    .filter((p) => imposterIds.includes(p.id))
                     .map((p) => (
                       <span key={p.id} className="term-chip term-chip-accent">
                         ▶ {p.name}
