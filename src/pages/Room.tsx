@@ -668,20 +668,21 @@ export default function Room() {
                   .sort((a, b) => (voteTally[b.id] || 0) - (voteTally[a.id] || 0))
                   .map((p) => {
                     const votes = voteTally[p.id] || 0;
+                    const isImp = imposterIds.includes(p.id);
                     return (
                       <div
                         key={p.id}
                         className="flex justify-between items-center px-3 py-2 text-sm term-sans"
                         style={{
-                          background: p.is_imposter
+                          background: isImp
                             ? "hsla(var(--game-accent), 0.12)"
                             : "hsl(var(--game-input-bg))",
-                          border: `1px solid ${p.is_imposter ? "hsl(var(--game-accent))" : "hsl(var(--game-border))"}`,
+                          border: `1px solid ${isImp ? "hsl(var(--game-accent))" : "hsl(var(--game-border))"}`,
                           borderRadius: 2,
                         }}
                       >
-                        <span style={{ color: p.is_imposter ? "hsl(var(--game-accent))" : "hsl(var(--game-text))" }}>
-                          {p.is_imposter && "▶ "}
+                        <span style={{ color: isImp ? "hsl(var(--game-accent))" : "hsl(var(--game-text))" }}>
+                          {isImp && "▶ "}
                           {p.name}
                         </span>
                         <span className="term-mono text-xs" style={{ color: "hsl(var(--game-secondary))" }}>
@@ -696,7 +697,7 @@ export default function Room() {
                 <p className="term-tag">// imposter waren</p>
                 <div className="flex flex-wrap gap-2">
                   {players
-                    .filter((p) => p.is_imposter)
+                    .filter((p) => imposterIds.includes(p.id))
                     .map((p) => (
                       <span key={p.id} className="term-chip term-chip-accent">
                         ▶ {p.name}
