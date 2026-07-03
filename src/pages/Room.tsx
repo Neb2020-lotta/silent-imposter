@@ -71,8 +71,49 @@ export default function Room() {
       const { data } = await supabase.from("messages").select("*").eq("room_id", room.id);
       if (data) setMessages(data);
     };
+    const loadMyRole = async () => {
+      const { data } = await supabase.rpc("get_my_role", {
+        p_room_id: room.id,
+        p_client_id: clientId,
+      });
+      if (data && data.length > 0) {
+        const r = data[0];
+        setMyRole({
+          is_imposter: r.is_imposter,
+          word: r.word,
+          imposter_tip: r.imposter_tip,
+          voted_for: r.voted_for,
+        });
+      } else {
+        setMyRole(null);
+      }
+    };
+    const loadVotes = async () => {
+      const [{ data: tally }, { data: total }] = await Promise.all([
+        supabase.rpc("get_vote_tally", { p_room_id: room.id }),
+        supabase.rpc("get_voted_count", { p_room_id: room.id }),
+      ]);
+      const t: Record<string, number> = {};
+      (tally ?? []).forEach((row: { target_id: string; votes: number }) => {
+        t[row.target_id] = Number(row.votes);
+      });
+      setVoteTally(t);
+      setVotedCount(typeof total === "number" ? total : 0);
+    };
+    const loadImposters = async () => {
+      if (room.state !== "reveal") {
+        setImposterIds([]);
+        return;
+      }
+      const { data } = await supabase.rpc("get_imposters", { p_room_id: room.id });
+      setImposterIds((data as string[] | null) ?? []);
+    };
+
     loadPlayers();
     loadMessages();
+    loadMyRole();
+    loadVotes();
+    loadImposters();
 
     const channel = supabase
       .channel(`room:${room.id}`)
@@ -82,12 +123,18 @@ export default function Room() {
         (payload) => {
           if (payload.eventType === "UPDATE") setRoom(payload.new as Room);
           if (payload.eventType === "DELETE") navigate("/");
+          loadVotes();
+          loadMyRole();
+          loadImposters();
         }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "players", filter: `room_id=eq.${room.id}` },
-        () => loadPlayers()
+        () => {
+          loadPlayers();
+          loadMyRole();
+        }
       )
       .on(
         "postgres_changes",
@@ -99,7 +146,7 @@ export default function Room() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [room?.id, navigate]);
+  }, [room?.id, room?.state, navigate, clientId]);
 
   useEffect(() => {
     if (room?.state === "lobby") setShowWord(false);
