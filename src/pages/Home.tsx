@@ -20,6 +20,11 @@ export default function Home() {
   const [code, setCode] = useState("");
   const [category, setCategory] = useState("Alle Wörter");
   const [busy, setBusy] = useState(false);
+  const [dotClicks, setDotClicks] = useState(0);
+  const [devPrompt, setDevPrompt] = useState(false);
+  const [devInput, setDevInput] = useState("");
+  const [devOpen, setDevOpen] = useState(false);
+
 
   const createRoom = async () => {
     if (!name.trim()) return toast.error("Bitte gib einen Namen ein");
