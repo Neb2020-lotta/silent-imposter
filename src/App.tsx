@@ -40,18 +40,21 @@ const App = () => (
       <Sonner />
       <AnimationsRoot>
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/room/:code" element={<Room />} />
-            <Route path="/local" element={<Local />} />
-            <Route path="/ai" element={<AIMode />} />
-            <Route path="/instructions" element={<Instructions />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <BanGate>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/room/:code" element={<Room />} />
+              <Route path="/local" element={<Local />} />
+              <Route path="/ai" element={<AIMode />} />
+              <Route path="/instructions" element={<Instructions />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BanGate>
         </BrowserRouter>
       </AnimationsRoot>
+
     </TooltipProvider>
   </QueryClientProvider>
 );
