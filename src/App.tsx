@@ -14,6 +14,8 @@ import NotFound from "./pages/NotFound";
 import { useSettings } from "@/lib/settings";
 import { applyTheme } from "@/lib/themes";
 import { applyPalette } from "@/lib/color";
+import BanGate from "@/components/BanGate";
+
 
 const queryClient = new QueryClient();
 
