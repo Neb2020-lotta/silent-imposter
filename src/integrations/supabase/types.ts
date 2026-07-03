@@ -52,6 +52,33 @@ export type Database = {
           },
         ]
       }
+      moderation_bans: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          ip: string
+          kind: string
+          reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          ip: string
+          kind: string
+          reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          ip?: string
+          kind?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       player_secrets: {
         Row: {
           client_id: string
