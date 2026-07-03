@@ -26,6 +26,8 @@ export default function Home() {
   const [devPrompt, setDevPrompt] = useState(false);
   const [devInput, setDevInput] = useState("");
   const [devOpen, setDevOpen] = useState(false);
+  const [banManagerOpen, setBanManagerOpen] = useState(false);
+
 
 
   const createRoom = async () => {
