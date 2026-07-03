@@ -10,6 +10,8 @@ import { setHostSecret, setPlayerId } from "@/lib/roomAuth";
 import { toast } from "sonner";
 import { Settings as Gear } from "lucide-react";
 import { sfx } from "@/lib/sounds";
+import BanManager from "@/components/BanManager";
+
 
 type Mode = "menu" | "host" | "join";
 
