@@ -202,10 +202,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      _require_host: {
-        Args: { p_room_id: string; p_secret: string }
-        Returns: undefined
-      }
       create_room: {
         Args: {
           p_category: string
