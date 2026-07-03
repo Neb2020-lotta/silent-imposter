@@ -135,14 +135,12 @@ export default function ChatPanel({
         <Input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && send("chat")}
-          placeholder=">_ Nachricht..."
+          onKeyDown={(e) => e.key === "Enter" && send("hint")}
+          placeholder=">_ Dein Hinweis..."
           maxLength={500}
+          disabled={myHintCount >= hintsRequired || !canSendHint}
           className="term-input term-mono text-sm"
         />
-        <button onClick={() => send("chat")} className="term-btn term-btn-ghost shrink-0">
-          Chat
-        </button>
         <button
           onClick={() => send("hint")}
           disabled={myHintCount >= hintsRequired || !canSendHint}
