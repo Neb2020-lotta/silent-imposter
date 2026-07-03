@@ -283,7 +283,6 @@ export default function Room() {
     if (error) rpcError(error, "Zug-Wechsel fehlgeschlagen");
   };
 
-  const votedCount = players.filter((p) => p.voted_for).length;
   const allVoted = players.length > 0 && votedCount === players.length;
 
   const goElimination = async () => {
