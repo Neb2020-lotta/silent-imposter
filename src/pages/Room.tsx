@@ -24,6 +24,15 @@ export default function Room() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [showWord, setShowWord] = useState(false);
+  const [myRole, setMyRole] = useState<{
+    is_imposter: boolean;
+    word: string | null;
+    imposter_tip: string | null;
+    voted_for: string | null;
+  } | null>(null);
+  const [voteTally, setVoteTally] = useState<Record<string, number>>({});
+  const [votedCount, setVotedCount] = useState(0);
+  const [imposterIds, setImposterIds] = useState<string[]>([]);
   const clientId = getClientId();
 
   useEffect(() => {
