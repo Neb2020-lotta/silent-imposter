@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,12 @@ import { wordCategories, generateRoomCode } from "@/lib/words";
 import { getClientId, getStoredName, setStoredName } from "@/lib/clientId";
 import { setHostSecret, setPlayerId } from "@/lib/roomAuth";
 import { toast } from "sonner";
-import { Settings as Gear } from "lucide-react";
+import { Settings as Gear, User, Users } from "lucide-react";
 import { sfx } from "@/lib/sounds";
 import BanManager from "@/components/BanManager";
+import AuthModal from "@/components/AuthModal";
+import FriendsModal from "@/components/FriendsModal";
+import { getAccount, tryIpAutoLogin, type Account } from "@/lib/account";
 
 
 type Mode = "menu" | "host" | "join";
