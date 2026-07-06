@@ -424,6 +424,8 @@ export default function Home() {
       )}
 
       {banManagerOpen && <BanManager onClose={() => setBanManagerOpen(false)} />}
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
+      {friendsOpen && account && <FriendsModal onClose={() => setFriendsOpen(false)} />}
     </div>
   );
 }
