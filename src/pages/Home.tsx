@@ -148,6 +148,31 @@ export default function Home() {
       >
         <Gear className="h-5 w-5" />
       </button>
+
+      <button
+        onClick={() => {
+          sfx.click();
+          if (account) setFriendsOpen(true);
+          else setAuthOpen(true);
+        }}
+        aria-label={account ? "Freunde" : "Einloggen"}
+        className="press-feedback absolute top-4 right-16 z-20 h-10 flex items-center justify-center gap-2 px-3"
+        style={{
+          border: "1px solid hsl(var(--game-border))",
+          background: "hsl(var(--game-card-bg))",
+          color: "hsl(var(--game-accent))",
+          borderRadius: 2,
+          fontFamily: mono,
+          fontSize: 11,
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+        }}
+      >
+        {account ? <Users className="h-4 w-4" /> : <User className="h-4 w-4" />}
+        <span className="hidden sm:inline" style={{ color: "hsl(var(--game-text))" }}>
+          {account ? account.username : "Login"}
+        </span>
+      </button>
       {/* LEFT — Brand */}
       <aside
         className="flex md:w-1/2 items-center justify-center px-8 py-16 md:py-12 border-b md:border-b-0 md:border-r"
