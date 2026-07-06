@@ -14,6 +14,101 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_sessions: {
+        Row: {
+          account_id: string
+          created_at: string
+          ip: string | null
+          token: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          ip?: string | null
+          token?: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          ip?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_sessions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accounts: {
+        Row: {
+          created_at: string
+          id: string
+          last_ip: string | null
+          password_hash: string
+          username: string
+          username_lower: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_ip?: string | null
+          password_hash: string
+          username: string
+          username_lower: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_ip?: string | null
+          password_hash?: string
+          username?: string
+          username_lower?: string
+        }
+        Relationships: []
+      }
+      friendships: {
+        Row: {
+          addressee_id: string
+          created_at: string
+          id: string
+          requester_id: string
+          status: string
+        }
+        Insert: {
+          addressee_id: string
+          created_at?: string
+          id?: string
+          requester_id: string
+          status?: string
+        }
+        Update: {
+          addressee_id?: string
+          created_at?: string
+          id?: string
+          requester_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friendships_addressee_id_fkey"
+            columns: ["addressee_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -229,6 +324,38 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      account_from_token: {
+        Args: { p_token: string }
+        Returns: {
+          account_id: string
+          username: string
+        }[]
+      }
+      account_login: {
+        Args: { p_ip: string; p_password: string; p_username: string }
+        Returns: {
+          account_id: string
+          token: string
+          username: string
+        }[]
+      }
+      account_login_by_ip: {
+        Args: { p_ip: string }
+        Returns: {
+          account_id: string
+          token: string
+          username: string
+        }[]
+      }
+      account_logout: { Args: { p_token: string }; Returns: undefined }
+      account_register: {
+        Args: { p_ip: string; p_password: string; p_username: string }
+        Returns: {
+          account_id: string
+          token: string
+          username: string
+        }[]
+      }
       create_room: {
         Args: {
           p_category: string
@@ -241,6 +368,27 @@ export type Database = {
           player_id: string
           room_id: string
         }[]
+      }
+      friend_accept: {
+        Args: { p_requester_id: string; p_token: string }
+        Returns: undefined
+      }
+      friend_list: {
+        Args: { p_token: string }
+        Returns: {
+          direction: string
+          other_id: string
+          status: string
+          username: string
+        }[]
+      }
+      friend_remove: {
+        Args: { p_other_id: string; p_token: string }
+        Returns: undefined
+      }
+      friend_request: {
+        Args: { p_target_username: string; p_token: string }
+        Returns: undefined
       }
       get_imposters: { Args: { p_room_id: string }; Returns: string[] }
       get_my_role: {
