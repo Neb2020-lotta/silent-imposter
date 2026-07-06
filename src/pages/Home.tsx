@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,12 @@ import { wordCategories, generateRoomCode } from "@/lib/words";
 import { getClientId, getStoredName, setStoredName } from "@/lib/clientId";
 import { setHostSecret, setPlayerId } from "@/lib/roomAuth";
 import { toast } from "sonner";
-import { Settings as Gear } from "lucide-react";
+import { Settings as Gear, User, Users } from "lucide-react";
 import { sfx } from "@/lib/sounds";
 import BanManager from "@/components/BanManager";
+import AuthModal from "@/components/AuthModal";
+import FriendsModal from "@/components/FriendsModal";
+import { getAccount, tryIpAutoLogin, type Account } from "@/lib/account";
 
 
 type Mode = "menu" | "host" | "join";
@@ -27,6 +30,23 @@ export default function Home() {
   const [devInput, setDevInput] = useState("");
   const [devOpen, setDevOpen] = useState(false);
   const [banManagerOpen, setBanManagerOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [friendsOpen, setFriendsOpen] = useState(false);
+  const [account, setAccount] = useState<Account | null>(getAccount());
+
+  useEffect(() => {
+    const sync = () => setAccount(getAccount());
+    window.addEventListener("account-changed", sync);
+    if (!getAccount()) {
+      tryIpAutoLogin().then((a) => { if (a) setAccount(a); });
+    }
+    return () => window.removeEventListener("account-changed", sync);
+  }, []);
+
+  useEffect(() => {
+    if (account && !name.trim()) setName(account.username);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account]);
 
 
 
@@ -127,6 +147,31 @@ export default function Home() {
         }}
       >
         <Gear className="h-5 w-5" />
+      </button>
+
+      <button
+        onClick={() => {
+          sfx.click();
+          if (account) setFriendsOpen(true);
+          else setAuthOpen(true);
+        }}
+        aria-label={account ? "Freunde" : "Einloggen"}
+        className="press-feedback absolute top-4 right-16 z-20 h-10 flex items-center justify-center gap-2 px-3"
+        style={{
+          border: "1px solid hsl(var(--game-border))",
+          background: "hsl(var(--game-card-bg))",
+          color: "hsl(var(--game-accent))",
+          borderRadius: 2,
+          fontFamily: mono,
+          fontSize: 11,
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+        }}
+      >
+        {account ? <Users className="h-4 w-4" /> : <User className="h-4 w-4" />}
+        <span className="hidden sm:inline" style={{ color: "hsl(var(--game-text))" }}>
+          {account ? account.username : "Login"}
+        </span>
       </button>
       {/* LEFT — Brand */}
       <aside
@@ -379,6 +424,8 @@ export default function Home() {
       )}
 
       {banManagerOpen && <BanManager onClose={() => setBanManagerOpen(false)} />}
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
+      {friendsOpen && account && <FriendsModal onClose={() => setFriendsOpen(false)} />}
     </div>
   );
 }
