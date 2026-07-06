@@ -30,6 +30,23 @@ export default function Home() {
   const [devInput, setDevInput] = useState("");
   const [devOpen, setDevOpen] = useState(false);
   const [banManagerOpen, setBanManagerOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [friendsOpen, setFriendsOpen] = useState(false);
+  const [account, setAccount] = useState<Account | null>(getAccount());
+
+  useEffect(() => {
+    const sync = () => setAccount(getAccount());
+    window.addEventListener("account-changed", sync);
+    if (!getAccount()) {
+      tryIpAutoLogin().then((a) => { if (a) setAccount(a); });
+    }
+    return () => window.removeEventListener("account-changed", sync);
+  }, []);
+
+  useEffect(() => {
+    if (account && !name.trim()) setName(account.username);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account]);
 
 
 
