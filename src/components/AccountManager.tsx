@@ -36,11 +36,16 @@ export default function AccountManager({ onClose }: { onClose: () => void }) {
     setLoading(true);
     const { data, error } = await call({ action: "accounts_list" });
     setLoading(false);
-    if (error || (data as { error?: string })?.error) {
-      toast.error("Zugriff verweigert");
-      if (String(error?.message ?? (data as { error?: string })?.error).includes("unauthorized")) {
+    const errMsg = error?.message ?? (data as { error?: string })?.error;
+    if (errMsg) {
+      if (String(errMsg).includes("unauthorized")) {
+        toast.error("Admin-Token ist ungültig");
         clearAdminToken();
         setToken("");
+      } else if (String(errMsg).includes("Failed to fetch") || String(errMsg).includes("NetworkError")) {
+        toast.error("Server nicht erreichbar");
+      } else {
+        toast.error(`Fehler beim Laden: ${errMsg}`);
       }
       return;
     }
