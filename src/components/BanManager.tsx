@@ -37,10 +37,15 @@ export default function BanManager({ onClose }: { onClose: () => void }) {
     try {
       setEntries(await listBans());
     } catch (e) {
-      toast.error("Zugriff verweigert oder Fehler");
-      if (String(e).includes("unauthorized")) {
+      const msg = String((e as Error)?.message ?? e);
+      if (msg.includes("unauthorized")) {
+        toast.error("Admin-Token ist ungültig");
         clearAdminToken();
         setToken("");
+      } else if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+        toast.error("Server nicht erreichbar");
+      } else {
+        toast.error(`Fehler beim Laden: ${msg}`);
       }
     } finally {
       setLoading(false);

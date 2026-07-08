@@ -32,6 +32,8 @@ export default function Home() {
   const [devOpen, setDevOpen] = useState(false);
   const [banManagerOpen, setBanManagerOpen] = useState(false);
   const [accountManagerOpen, setAccountManagerOpen] = useState(false);
+  const [gateFor, setGateFor] = useState<null | "ban" | "account">(null);
+  const [gateInput, setGateInput] = useState("");
   const [authOpen, setAuthOpen] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
   const [account, setAccount] = useState<Account | null>(getAccount());
@@ -412,8 +414,8 @@ export default function Home() {
               </button>
             </div>
             <div className="grid gap-2">
-              <DevItem label="Ban Management (IP)" onClick={() => { setDevOpen(false); setBanManagerOpen(true); }} />
-              <DevItem label="Account Management" onClick={() => { setDevOpen(false); setAccountManagerOpen(true); }} />
+              <DevItem label="Ban Management (IP)" onClick={() => { setDevOpen(false); setGateFor("ban"); }} />
+              <DevItem label="Account Management" onClick={() => { setDevOpen(false); setGateFor("account"); }} />
               <DevItem label="Gegen KI spielen" onClick={() => { setDevOpen(false); navigate("/ai"); }} />
               <DevItem label="Wie spielt man?" onClick={() => { setDevOpen(false); navigate("/instructions"); }} />
               <DevItem label="Lokal spielen" onClick={() => { setDevOpen(false); navigate("/local"); }} />
@@ -421,6 +423,49 @@ export default function Home() {
             </div>
             <p className="text-[10px]" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
               Versteckte Routen & Debug-Zugänge
+            </p>
+          </div>
+        </div>
+      )}
+
+      {gateFor && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-6"
+          style={{ background: "rgba(0,0,0,0.85)" }}
+          onClick={() => { setGateFor(null); setGateInput(""); }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm p-6 space-y-4"
+            style={{ background: "hsl(var(--game-card-bg))", border: "1px solid hsl(var(--game-accent))", borderRadius: 2 }}
+          >
+            <p className="text-xs uppercase tracking-widest" style={{ fontFamily: mono, color: "hsl(var(--game-accent))" }}>
+              // Sicherheits-Code
+            </p>
+            <Input
+              autoFocus
+              type="password"
+              inputMode="numeric"
+              value={gateInput}
+              onChange={(e) => setGateInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter") return;
+                if (gateInput.trim() === "90123") {
+                  const target = gateFor;
+                  setGateFor(null);
+                  setGateInput("");
+                  if (target === "ban") setBanManagerOpen(true);
+                  else setAccountManagerOpen(true);
+                } else {
+                  toast.error("Falscher Sicherheits-Code");
+                  setGateInput("");
+                }
+              }}
+              placeholder="Code eingeben"
+              style={inputStyle}
+            />
+            <p className="text-[10px]" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
+              Enter zum bestätigen
             </p>
           </div>
         </div>
