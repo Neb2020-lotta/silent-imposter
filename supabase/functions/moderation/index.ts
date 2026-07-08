@@ -26,6 +26,10 @@ const BodySchema = z.discriminatedUnion("action", [
     reason: z.string().max(200).optional(),
   }),
   z.object({ action: z.literal("remove"), ip: IpSchema }),
+  z.object({ action: z.literal("accounts_list") }),
+  z.object({ action: z.literal("accounts_rename"), account_id: z.string().uuid(), username: z.string().trim().min(2).max(24) }),
+  z.object({ action: z.literal("accounts_set_password"), account_id: z.string().uuid(), password: z.string().min(4).max(200) }),
+  z.object({ action: z.literal("accounts_delete"), account_id: z.string().uuid() }),
 ]);
 
 function getClientIp(req: Request): string {
@@ -118,6 +122,36 @@ Deno.serve(async (req) => {
   if (body.action === "remove") {
     const { error } = await supabase.from("moderation_bans").delete().eq("ip", body.ip);
     if (error) return json({ error: "db_error" }, 500);
+    return json({ ok: true });
+  }
+
+  if (body.action === "accounts_list") {
+    const { data, error } = await supabase.schema("game_internal" as never).rpc("admin_list_accounts");
+    if (error) return json({ error: "db_error", detail: error.message }, 500);
+    return json({ accounts: data ?? [] });
+  }
+
+  if (body.action === "accounts_rename") {
+    const { error } = await supabase.schema("game_internal" as never).rpc("admin_rename_account", {
+      p_account_id: body.account_id, p_new_username: body.username,
+    });
+    if (error) return json({ error: error.message.includes("username_taken") ? "username_taken" : error.message.includes("invalid_username") ? "invalid_username" : "db_error" }, 400);
+    return json({ ok: true });
+  }
+
+  if (body.action === "accounts_set_password") {
+    const { error } = await supabase.schema("game_internal" as never).rpc("admin_set_password", {
+      p_account_id: body.account_id, p_new_password: body.password,
+    });
+    if (error) return json({ error: "db_error", detail: error.message }, 500);
+    return json({ ok: true });
+  }
+
+  if (body.action === "accounts_delete") {
+    const { error } = await supabase.schema("game_internal" as never).rpc("admin_delete_account", {
+      p_account_id: body.account_id,
+    });
+    if (error) return json({ error: "db_error", detail: error.message }, 500);
     return json({ ok: true });
   }
 
