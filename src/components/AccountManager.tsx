@@ -30,6 +30,28 @@ export default function AccountManager({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("");
   const [editing, setEditing] = useState<Record<string, { name: string; pw: string }>>({});
+  const [playerNames, setPlayerNames] = useState<{ name: string; count: number; last: string }[]>([]);
+  const [showPlayers, setShowPlayers] = useState(false);
+
+  const loadPlayerNames = async () => {
+    const { data, error } = await supabase
+      .from("players")
+      .select("name, joined_at")
+      .order("joined_at", { ascending: false })
+      .limit(2000);
+    if (error) return toast.error("Fehler beim Laden der Spielernamen");
+    const map = new Map<string, { count: number; last: string }>();
+    for (const r of (data ?? []) as { name: string; joined_at: string }[]) {
+      const cur = map.get(r.name);
+      if (cur) cur.count += 1;
+      else map.set(r.name, { count: 1, last: r.joined_at });
+    }
+    setPlayerNames(
+      Array.from(map.entries())
+        .map(([name, v]) => ({ name, count: v.count, last: v.last }))
+        .sort((a, b) => b.last.localeCompare(a.last)),
+    );
+  };
 
   const load = async () => {
     if (!getAdminToken()) return;
