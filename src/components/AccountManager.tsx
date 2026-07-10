@@ -249,6 +249,53 @@ export default function AccountManager({ onClose }: { onClose: () => void }) {
               </div>
             ))}
 
+            <div className="pt-3" style={{ borderTop: "1px solid hsl(var(--game-border))" }}>
+              <button
+                onClick={() => {
+                  const next = !showPlayers;
+                  setShowPlayers(next);
+                  if (next && playerNames.length === 0) loadPlayerNames();
+                }}
+                className="w-full px-3 py-2 text-[10px] uppercase tracking-widest press-feedback"
+                style={{ fontFamily: mono, border: "1px solid hsl(var(--game-border))", color: "hsl(var(--game-accent))", borderRadius: 2 }}
+              >
+                {showPlayers ? "▼" : "▶"} Alle Spielernamen ({playerNames.length || "…"})
+              </button>
+              {showPlayers && (
+                <div className="mt-2 space-y-1 max-h-72 overflow-y-auto">
+                  <div className="flex justify-end">
+                    <button
+                      onClick={loadPlayerNames}
+                      className="px-2 py-1 text-[10px] uppercase tracking-widest"
+                      style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
+                    >
+                      ↻ Aktualisieren
+                    </button>
+                  </div>
+                  {playerNames
+                    .filter((p) => p.name.toLowerCase().includes(filter.toLowerCase()))
+                    .map((p) => (
+                      <div
+                        key={p.name}
+                        className="flex items-center justify-between px-2 py-1.5"
+                        style={{ border: "1px solid hsl(var(--game-border))", borderRadius: 2 }}
+                      >
+                        <span className="text-xs font-bold" style={{ fontFamily: mono }}>{p.name}</span>
+                        <span className="text-[10px]" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
+                          {p.count}× · {new Date(p.last).toLocaleDateString()}
+                        </span>
+                      </div>
+                    ))}
+                  {playerNames.length === 0 && (
+                    <p className="text-[10px] text-center py-3" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
+                      Keine Spielernamen gefunden
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+
             <button
               onClick={() => { clearAdminToken(); setToken(""); }}
               className="w-full text-[10px] uppercase tracking-widest py-2"
