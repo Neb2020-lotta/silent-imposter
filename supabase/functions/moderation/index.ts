@@ -7,7 +7,6 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
-const ADMIN_TOKEN = Deno.env.get("MODERATION_ADMIN_TOKEN") ?? "";
 
 const IpSchema = z
   .string()
@@ -47,10 +46,8 @@ function json(body: unknown, status = 200) {
   });
 }
 
-function isAdmin(req: Request): boolean {
-  const token = req.headers.get("x-admin-token") ?? "";
-  return ADMIN_TOKEN.length > 0 && token === ADMIN_TOKEN;
-}
+
+
 
 async function purgeExpired() {
   await supabase
@@ -88,8 +85,8 @@ Deno.serve(async (req) => {
     return json({ ip, entry: data ?? null });
   }
 
-  // admin-only actions
-  if (!isAdmin(req)) return json({ error: "unauthorized" }, 401);
+
+
 
   if (body.action === "list") {
     const { data, error } = await supabase
