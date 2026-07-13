@@ -2,10 +2,8 @@ import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { getAdminToken, clearAdminToken, setAdminToken } from "@/lib/moderation";
 
 const mono = "'Space Mono', monospace";
-const rubik = "'Rubik', sans-serif";
 
 const inputStyle: React.CSSProperties = {
   background: "hsl(var(--game-input-bg))",
@@ -17,15 +15,10 @@ const inputStyle: React.CSSProperties = {
 type AccountRow = { id: string; username: string; last_ip: string | null; created_at: string };
 
 async function call(body: unknown) {
-  return supabase.functions.invoke("moderation", {
-    body,
-    headers: { "x-admin-token": getAdminToken() },
-  });
+  return supabase.functions.invoke("moderation", { body });
 }
 
 export default function AccountManager({ onClose }: { onClose: () => void }) {
-  const [token, setToken] = useState(getAdminToken());
-  const [tokenDraft, setTokenDraft] = useState("");
   const [rows, setRows] = useState<AccountRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("");
@@ -54,17 +47,12 @@ export default function AccountManager({ onClose }: { onClose: () => void }) {
   };
 
   const load = async () => {
-    if (!getAdminToken()) return;
     setLoading(true);
     const { data, error } = await call({ action: "accounts_list" });
     setLoading(false);
     const errMsg = error?.message ?? (data as { error?: string })?.error;
     if (errMsg) {
-      if (String(errMsg).includes("unauthorized")) {
-        toast.error("Admin-Token ist ungültig");
-        clearAdminToken();
-        setToken("");
-      } else if (String(errMsg).includes("Failed to fetch") || String(errMsg).includes("NetworkError")) {
+      if (String(errMsg).includes("Failed to fetch") || String(errMsg).includes("NetworkError")) {
         toast.error("Server nicht erreichbar");
       } else {
         toast.error(`Fehler beim Laden: ${errMsg}`);
@@ -75,17 +63,9 @@ export default function AccountManager({ onClose }: { onClose: () => void }) {
   };
 
   useEffect(() => {
-    if (token) load();
+    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
-
-  const submitToken = () => {
-    const t = tokenDraft.trim();
-    if (!t) return;
-    setAdminToken(t);
-    setToken(t);
-    setTokenDraft("");
-  };
+  }, []);
 
   const setField = (id: string, key: "name" | "pw", val: string) =>
     setEditing((s) => ({ ...s, [id]: { name: s[id]?.name ?? "", pw: s[id]?.pw ?? "", [key]: val } }));
@@ -127,184 +107,167 @@ export default function AccountManager({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8"
-      style={{ background: "rgba(0,0,0,0.85)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8 animate-fade-in"
+      style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)" }}
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 space-y-5"
+        className="w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 space-y-5 animate-scale-in"
         style={{
           background: "hsl(var(--game-card-bg))",
           border: "1px solid hsl(var(--game-accent))",
           borderRadius: 2,
+          boxShadow: "0 20px 60px -10px hsl(var(--game-accent) / 0.4)",
         }}
       >
         <div className="flex items-center justify-between">
           <p className="text-xs uppercase tracking-widest" style={{ fontFamily: mono, color: "hsl(var(--game-accent))" }}>
             // Account Management
           </p>
-          <button onClick={onClose} className="text-xs uppercase" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
+          <button
+            onClick={onClose}
+            className="text-xs uppercase transition-transform hover:rotate-90 hover:scale-110"
+            style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
+          >
             ✕
           </button>
         </div>
 
-        {!token && (
-          <div className="space-y-3">
-            <p className="text-sm" style={{ fontFamily: rubik, color: "hsl(var(--game-secondary))" }}>
-              Admin-Token eingeben.
-            </p>
-            <Input
-              type="password"
-              value={tokenDraft}
-              onChange={(e) => setTokenDraft(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submitToken()}
-              placeholder="MODERATION_ADMIN_TOKEN"
-              style={inputStyle}
-            />
-            <button
-              onClick={submitToken}
-              className="w-full py-3 text-sm font-bold uppercase tracking-wider press-feedback"
-              style={{ fontFamily: mono, background: "hsl(var(--game-accent))", color: "hsl(0 0% 8%)", borderRadius: 2 }}
-            >
-              Freischalten
-            </button>
-          </div>
-        )}
+        <p className="text-[10px]" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
+          Passwörter sind gehasht (bcrypt) und nicht lesbar. Du kannst sie hier neu setzen.
+        </p>
+        <div className="flex items-center gap-2">
+          <Input
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Nach Name filtern…"
+            style={inputStyle}
+          />
+          <button
+            onClick={load}
+            className="px-3 py-2 text-[10px] uppercase tracking-widest press-feedback transition-transform hover:scale-110 hover:rotate-180"
+            style={{ fontFamily: mono, border: "1px solid hsl(var(--game-border))", color: "hsl(var(--game-accent))", borderRadius: 2 }}
+          >
+            {loading ? "..." : "↻"}
+          </button>
+        </div>
 
-        {token && (
-          <>
-            <p className="text-[10px]" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
-              Passwörter sind gehasht (bcrypt) und nicht lesbar. Du kannst sie hier neu setzen.
-            </p>
-            <div className="flex items-center gap-2">
+        <p className="text-[10px] uppercase tracking-widest" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
+          {filtered.length} von {rows.length}
+        </p>
+
+        {filtered.map((r, idx) => (
+          <div
+            key={r.id}
+            className="p-3 space-y-2 animate-fade-in transition-all hover:border-[hsl(var(--game-accent))]"
+            style={{
+              border: "1px solid hsl(var(--game-border))",
+              borderRadius: 2,
+              animationDelay: `${Math.min(idx, 20) * 25}ms`,
+              animationFillMode: "both",
+            }}
+          >
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="min-w-0">
+                <p className="text-sm font-bold" style={{ fontFamily: mono }}>{r.username}</p>
+                <p className="text-[10px]" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
+                  {r.last_ip ?? "–"} · {new Date(r.created_at).toLocaleDateString()}
+                </p>
+              </div>
+              <button
+                onClick={() => del(r)}
+                className="px-3 py-1.5 text-[10px] uppercase tracking-widest press-feedback transition-all hover:scale-105"
+                style={{ fontFamily: mono, border: "1px solid hsl(0 70% 55%)", color: "hsl(0 70% 55%)", borderRadius: 2 }}
+              >
+                Löschen
+              </button>
+            </div>
+            <div className="flex gap-2">
               <Input
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                placeholder="Nach Name filtern…"
+                value={editing[r.id]?.name ?? ""}
+                onChange={(e) => setField(r.id, "name", e.target.value)}
+                placeholder="Neuer Name"
+                maxLength={24}
                 style={inputStyle}
               />
               <button
-                onClick={load}
-                className="px-3 py-2 text-[10px] uppercase tracking-widest press-feedback"
-                style={{ fontFamily: mono, border: "1px solid hsl(var(--game-border))", color: "hsl(var(--game-accent))", borderRadius: 2 }}
+                onClick={() => saveName(r)}
+                className="px-3 py-2 text-[10px] uppercase tracking-widest press-feedback whitespace-nowrap transition-transform hover:scale-105"
+                style={{ fontFamily: mono, border: "1px solid hsl(var(--game-accent))", color: "hsl(var(--game-accent))", borderRadius: 2 }}
               >
-                {loading ? "..." : "↻"}
+                Umbenennen
               </button>
             </div>
-
-            <p className="text-[10px] uppercase tracking-widest" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
-              {filtered.length} von {rows.length}
-            </p>
-
-            {filtered.map((r) => (
-              <div key={r.id} className="p-3 space-y-2" style={{ border: "1px solid hsl(var(--game-border))", borderRadius: 2 }}>
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold" style={{ fontFamily: mono }}>{r.username}</p>
-                    <p className="text-[10px]" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
-                      {r.last_ip ?? "–"} · {new Date(r.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => del(r)}
-                    className="px-3 py-1.5 text-[10px] uppercase tracking-widest press-feedback"
-                    style={{ fontFamily: mono, border: "1px solid hsl(0 70% 55%)", color: "hsl(0 70% 55%)", borderRadius: 2 }}
-                  >
-                    Löschen
-                  </button>
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    value={editing[r.id]?.name ?? ""}
-                    onChange={(e) => setField(r.id, "name", e.target.value)}
-                    placeholder="Neuer Name"
-                    maxLength={24}
-                    style={inputStyle}
-                  />
-                  <button
-                    onClick={() => saveName(r)}
-                    className="px-3 py-2 text-[10px] uppercase tracking-widest press-feedback whitespace-nowrap"
-                    style={{ fontFamily: mono, border: "1px solid hsl(var(--game-accent))", color: "hsl(var(--game-accent))", borderRadius: 2 }}
-                  >
-                    Umbenennen
-                  </button>
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    type="text"
-                    value={editing[r.id]?.pw ?? ""}
-                    onChange={(e) => setField(r.id, "pw", e.target.value)}
-                    placeholder="Neues Passwort (min. 4)"
-                    style={inputStyle}
-                  />
-                  <button
-                    onClick={() => savePw(r)}
-                    className="px-3 py-2 text-[10px] uppercase tracking-widest press-feedback whitespace-nowrap"
-                    style={{ fontFamily: mono, background: "hsl(var(--game-accent))", color: "hsl(0 0% 8%)", borderRadius: 2 }}
-                  >
-                    Setzen
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            <div className="pt-3" style={{ borderTop: "1px solid hsl(var(--game-border))" }}>
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                value={editing[r.id]?.pw ?? ""}
+                onChange={(e) => setField(r.id, "pw", e.target.value)}
+                placeholder="Neues Passwort (min. 4)"
+                style={inputStyle}
+              />
               <button
-                onClick={() => {
-                  const next = !showPlayers;
-                  setShowPlayers(next);
-                  if (next && playerNames.length === 0) loadPlayerNames();
-                }}
-                className="w-full px-3 py-2 text-[10px] uppercase tracking-widest press-feedback"
-                style={{ fontFamily: mono, border: "1px solid hsl(var(--game-border))", color: "hsl(var(--game-accent))", borderRadius: 2 }}
+                onClick={() => savePw(r)}
+                className="px-3 py-2 text-[10px] uppercase tracking-widest press-feedback whitespace-nowrap transition-transform hover:scale-105"
+                style={{ fontFamily: mono, background: "hsl(var(--game-accent))", color: "hsl(0 0% 8%)", borderRadius: 2 }}
               >
-                {showPlayers ? "▼" : "▶"} Alle Spielernamen ({playerNames.length || "…"})
+                Setzen
               </button>
-              {showPlayers && (
-                <div className="mt-2 space-y-1 max-h-72 overflow-y-auto">
-                  <div className="flex justify-end">
-                    <button
-                      onClick={loadPlayerNames}
-                      className="px-2 py-1 text-[10px] uppercase tracking-widest"
-                      style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
-                    >
-                      ↻ Aktualisieren
-                    </button>
+            </div>
+          </div>
+        ))}
+
+        <div className="pt-3" style={{ borderTop: "1px solid hsl(var(--game-border))" }}>
+          <button
+            onClick={() => {
+              const next = !showPlayers;
+              setShowPlayers(next);
+              if (next && playerNames.length === 0) loadPlayerNames();
+            }}
+            className="w-full px-3 py-2 text-[10px] uppercase tracking-widest press-feedback transition-all hover:scale-[1.01]"
+            style={{ fontFamily: mono, border: "1px solid hsl(var(--game-border))", color: "hsl(var(--game-accent))", borderRadius: 2 }}
+          >
+            {showPlayers ? "▼" : "▶"} Alle Spielernamen ({playerNames.length || "…"})
+          </button>
+          {showPlayers && (
+            <div className="mt-2 space-y-1 max-h-72 overflow-y-auto animate-fade-in">
+              <div className="flex justify-end">
+                <button
+                  onClick={loadPlayerNames}
+                  className="px-2 py-1 text-[10px] uppercase tracking-widest transition-transform hover:scale-110"
+                  style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
+                >
+                  ↻ Aktualisieren
+                </button>
+              </div>
+              {playerNames
+                .filter((p) => p.name.toLowerCase().includes(filter.toLowerCase()))
+                .map((p, idx) => (
+                  <div
+                    key={p.name}
+                    className="flex items-center justify-between px-2 py-1.5 animate-fade-in"
+                    style={{
+                      border: "1px solid hsl(var(--game-border))",
+                      borderRadius: 2,
+                      animationDelay: `${Math.min(idx, 30) * 15}ms`,
+                      animationFillMode: "both",
+                    }}
+                  >
+                    <span className="text-xs font-bold" style={{ fontFamily: mono }}>{p.name}</span>
+                    <span className="text-[10px]" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
+                      {p.count}× · {new Date(p.last).toLocaleDateString()}
+                    </span>
                   </div>
-                  {playerNames
-                    .filter((p) => p.name.toLowerCase().includes(filter.toLowerCase()))
-                    .map((p) => (
-                      <div
-                        key={p.name}
-                        className="flex items-center justify-between px-2 py-1.5"
-                        style={{ border: "1px solid hsl(var(--game-border))", borderRadius: 2 }}
-                      >
-                        <span className="text-xs font-bold" style={{ fontFamily: mono }}>{p.name}</span>
-                        <span className="text-[10px]" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
-                          {p.count}× · {new Date(p.last).toLocaleDateString()}
-                        </span>
-                      </div>
-                    ))}
-                  {playerNames.length === 0 && (
-                    <p className="text-[10px] text-center py-3" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
-                      Keine Spielernamen gefunden
-                    </p>
-                  )}
-                </div>
+                ))}
+              {playerNames.length === 0 && (
+                <p className="text-[10px] text-center py-3" style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}>
+                  Keine Spielernamen gefunden
+                </p>
               )}
             </div>
-
-
-            <button
-              onClick={() => { clearAdminToken(); setToken(""); }}
-              className="w-full text-[10px] uppercase tracking-widest py-2"
-              style={{ fontFamily: mono, color: "hsl(var(--game-secondary))" }}
-            >
-              Admin-Token vergessen
-            </button>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
