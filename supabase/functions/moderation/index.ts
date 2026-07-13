@@ -7,7 +7,6 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
-const ADMIN_TOKEN = Deno.env.get("MODERATION_ADMIN_TOKEN") ?? "";
 
 const IpSchema = z
   .string()
