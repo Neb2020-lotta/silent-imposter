@@ -85,8 +85,8 @@ Deno.serve(async (req) => {
     return json({ ip, entry: data ?? null });
   }
 
-  // admin-only actions
-  if (!isAdmin(req)) return json({ error: "unauthorized" }, 401);
+
+
 
   if (body.action === "list") {
     const { data, error } = await supabase
