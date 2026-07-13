@@ -46,10 +46,8 @@ function json(body: unknown, status = 200) {
   });
 }
 
-function isAdmin(req: Request): boolean {
-  const token = req.headers.get("x-admin-token") ?? "";
-  return ADMIN_TOKEN.length > 0 && token === ADMIN_TOKEN;
-}
+
+
 
 async function purgeExpired() {
   await supabase
